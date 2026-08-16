@@ -1,7 +1,8 @@
 """PAWBench quickstart.
 
-Current status (wave 2): load and inspect the synthetic benchmark package.
-Waves ahead: submission load/build (wave 3), evaluate + results (wave 6).
+Current status (wave 3): load the synthetic benchmark package and a
+submission, then show the fixed denominator. Waves ahead: evaluate +
+results (wave 6).
 
 Run from the repository root:
 
@@ -15,12 +16,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pawbench.benchmark
+import pawbench.submission
 
-EXAMPLE_PACKAGE = Path(__file__).resolve().parent / "benchmark"
+EXAMPLES = Path(__file__).resolve().parent
 
 
 def main() -> None:
-    benchmark = pawbench.benchmark.load(EXAMPLE_PACKAGE)
+    benchmark = pawbench.benchmark.load(EXAMPLES / "benchmark")
     print(
         f"{benchmark.dataset_id} rev {benchmark.benchmark_revision} — "
         f"{len(benchmark.scenes)} scenes, prompt sets: {sorted(benchmark.prompt_sets)}, "
@@ -28,15 +30,25 @@ def main() -> None:
     )
     for split in ("calibration", "coverage"):
         for scene in benchmark.scenes_in_split(split):
-            reference = scene.reference_distribution()
-            if reference is None:
-                detail = "coverage: no published reference"
-            else:
-                detail = "reference: " + ", ".join(
-                    f"{label}={count}" for label, count in reference.items()
-                )
             print(f"  [{scene.split}] {scene.scene_id} #{scene.split_order}: {scene.action}")
-            print(f"      outcomes: {', '.join(scene.outcome_labels)} — {detail}")
+
+    submission = pawbench.submission.load(
+        EXAMPLES / "submission" / "submission.json", benchmark=benchmark
+    )
+    produced = sum(1 for item in submission.items if item.status == "produced")
+    failed = {
+        status: sum(1 for item in submission.items if item.status == status)
+        for status in ("model_failure", "infrastructure_failure")
+    }
+    print(
+        f"\nsubmission {submission.submission_id!r} ({submission.system}): "
+        f"{submission.slot_count} slots = "
+        f"{len(submission.scene_ids)} scenes x {submission.repeats_per_scene} repeats"
+    )
+    print(
+        f"  produced: {produced}, model_failure: {failed['model_failure']}, "
+        f"infrastructure_failure: {failed['infrastructure_failure']}"
+    )
 
 
 if __name__ == "__main__":

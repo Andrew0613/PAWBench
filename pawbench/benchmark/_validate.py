@@ -14,6 +14,7 @@ from __future__ import annotations
 import re
 from fractions import Fraction
 
+from pawbench._paths import safe_relative_path_detail as _safe_relative_path_detail
 from pawbench.benchmark._load import RawPackage
 from pawbench.benchmark._model import (
     Benchmark,
@@ -63,28 +64,6 @@ def _is_int(value: object) -> bool:
 
 def _nonempty_str(value: object) -> bool:
     return isinstance(value, str) and value != ""
-
-
-def _safe_relative_path_detail(value: object) -> str | None:
-    """Return a problem detail if ``value`` is not a safe package-relative path."""
-    if not _nonempty_str(value):
-        return "path must be a non-empty string"
-    text: str = value  # type: ignore[assignment]
-    if text.startswith("/"):
-        return "path must be relative (found leading '/')"
-    if "\\" in text:
-        return "path must use POSIX separators (found '\\')"
-    if any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in text):
-        return "path must not contain control characters"
-    first_segment = text.split("/")[0]
-    if ":" in first_segment:
-        return "path must not contain ':' in the first segment (URI scheme or drive letter)"
-    for segment in text.split("/"):
-        if segment == "":
-            return "path must not contain empty segments ('//' or trailing '/')"
-        if segment in (".", ".."):
-            return f"path must not contain {segment!r} segments"
-    return None
 
 
 def _unexpected_fields(fields: set[str], allowed: set[str]) -> list[str]:

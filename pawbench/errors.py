@@ -57,3 +57,7 @@ class ValidationError(PawbenchError):
 
 class BenchmarkError(ValidationError):
     """A benchmark package failed validation."""
+
+
+class SubmissionError(ValidationError):
+    """A submission manifest failed validation."""
