@@ -61,3 +61,12 @@ class BenchmarkError(ValidationError):
 
 class SubmissionError(ValidationError):
     """A submission manifest failed validation."""
+
+
+class ResultError(ValidationError):
+    """A result bundle failed to read or reconcile.
+
+    By the time a result bundle exists, its inputs were valid, so problems
+    here indicate tampering or corruption rather than authoring mistakes.
+    Uses the same batch presentation as the other validation errors.
+    """
