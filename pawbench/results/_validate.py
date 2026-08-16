@@ -187,6 +187,18 @@ def _check_rows(
                 TRUSTWORTHINESS_FIELDS,
                 problems,
             )
+            for payload_name, payload in (
+                ("outcome_readout", outcome_readout),
+                ("trustworthiness_audit", trustworthiness),
+            ):
+                if isinstance(payload, dict) and payload.get("scene_id") != scene_id:
+                    problems.append(
+                        ValidationProblem(
+                            f"{where}: {payload_name}.scene_id",
+                            f"payload echoes {payload.get('scene_id')!r}, "
+                            f"row is {scene_id!r}",
+                        )
+                    )
         elif status in ("model_failure", "infrastructure_failure"):
             if failure_code not in ROW_FAILURE_CODES:
                 problems.append(

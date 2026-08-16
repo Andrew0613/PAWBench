@@ -36,8 +36,9 @@ def sub(benchmark) -> submission.Submission:
     return submission.load(EXAMPLES / "submission" / "submission.json", benchmark=benchmark)
 
 
-def _outcome_payload(label: str) -> dict:
+def _outcome_payload(label: str, scene_id: str = "SYN-C01") -> dict:
     return {
+        "scene_id": scene_id,
         "outcome_readable": True,
         "outcome_in_schema": "IN_SCHEMA",
         "outcome_label": label,
@@ -46,8 +47,9 @@ def _outcome_payload(label: str) -> dict:
     }
 
 
-def _trust_payload() -> dict:
+def _trust_payload(scene_id: str = "SYN-C01") -> dict:
     return {
+        "scene_id": scene_id,
         "status": "TRUSTED",
         "scene_grounding": {"status": "PASS", "notes": ""},
         "action_execution": {
@@ -85,8 +87,8 @@ def _synthetic_rows(benchmark, sub) -> tuple[ResultRow, ...]:
                 scene_id=item.scene_id,
                 repeat_index=item.repeat_index,
                 split=scene.split,
-                outcome_readout=_outcome_payload(label),
-                trustworthiness_audit=_trust_payload(),
+                outcome_readout=_outcome_payload(label, scene_id=item.scene_id),
+                trustworthiness_audit=_trust_payload(scene_id=item.scene_id),
                 relaxed_included=True,
                 strict_included=True,
                 outcome_label=label,
@@ -178,7 +180,7 @@ def test_error_counts_explode_on_untrusted_rows(benchmark, sub) -> None:
                     repeat_index=row.repeat_index,
                     split=row.split,
                     outcome_readout=row.outcome_readout,
-                    trustworthiness_audit=_trust_payload() | {"status": "UNTRUSTED"},
+                    trustworthiness_audit=_trust_payload() | {"status": "UNTRUSTED"},  # SYN-C01 row
                     relaxed_included=True,
                     strict_included=False,
                     outcome_label=None,

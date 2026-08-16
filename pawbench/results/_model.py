@@ -42,15 +42,22 @@ ROW_FAILURE_CODES = frozenset(
 SUMMARY_STATUSES = frozenset({"formal", "diagnostic_partial_grid", "diagnostic_infra_failure"})
 
 OUTCOME_READOUT_FIELDS = frozenset(
-    {"outcome_readable", "outcome_in_schema", "outcome_label", "observed_result", "failure_axes"}
+    {
+        "scene_id",
+        "outcome_readable",
+        "outcome_in_schema",
+        "outcome_label",
+        "observed_result",
+        "failure_axes",
+    }
 )
 TRUST_BLOCK_FIELDS = frozenset({"status", "notes"})
 TRUST_ACTION_FIELDS = frozenset(
     {"status", "target_hit", "object_acquired", "action_spec_followed", "notes"}
 )
 TRUSTWORTHINESS_FIELDS = frozenset(
-    {"status", "scene_grounding", "action_execution", "object_continuity", "physical_process",
-     "failure_axes"}
+    {"scene_id", "status", "scene_grounding", "action_execution", "object_continuity",
+     "physical_process", "failure_axes"}
 )
 
 
