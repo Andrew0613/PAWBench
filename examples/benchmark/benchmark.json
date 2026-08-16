@@ -2,13 +2,11 @@
   "schema_version": "pawbench.benchmark_package/v1",
   "dataset_id": "PAWBench-example",
   "benchmark_revision": 1,
+  "formal_repeats": 50,
   "scene_table": "scenes.jsonl",
-  "source_image_root": "images",
   "prompt_sets": {
     "gt_guided": {
-      "path": "prompts/gt_guided.jsonl",
-      "scene_count": 2,
-      "outcome_prompt_count": 5
+      "path": "prompts/gt_guided.jsonl"
     }
   }
 }

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Andrew0613/PAWBench/schemas/benchmark-package-v1.schema.json",
   "title": "PAWBench benchmark package (v1)",
-  "description": "Contract for a public PAWBench benchmark package. The root schema validates benchmark.json. The '#/$defs/scene' subschema validates each line of scenes.jsonl, and '#/$defs/promptSetRow' validates each line of a prompt-set JSONL file. Draft status: authoritative validation lives in pawbench.benchmark; this schema documents the same contract for external tools and is double-run against the loader in tests.",
+  "description": "Contract for a public PAWBench benchmark package. The root schema validates benchmark.json. The '#/$defs/scene' subschema validates each line of the scene table, and '#/$defs/promptSetRow' validates each line of a prompt-set JSONL file. All paths are relative to the package root. Draft status: authoritative validation lives in pawbench.benchmark; this schema documents the same contract for external tools and is double-run against the loader in tests.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -10,7 +10,6 @@
     "dataset_id",
     "benchmark_revision",
     "scene_table",
-    "source_image_root",
     "prompt_sets"
   ],
   "properties": {
@@ -26,12 +25,12 @@
       "type": "integer",
       "minimum": 1
     },
-    "scene_table": {
-      "type": "string",
-      "$comment": "Safe relative POSIX path to the scene table within the package.",
-      "$ref": "#/$defs/safeRelativePath"
+    "formal_repeats": {
+      "type": "integer",
+      "minimum": 1,
+      "$comment": "Optional. The per-scene repeat count K that a formal submission must use. Declared by data, not hardcoded by loaders."
     },
-    "source_image_root": {
+    "scene_table": {
       "type": "string",
       "$ref": "#/$defs/safeRelativePath"
     },
@@ -44,11 +43,9 @@
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["path", "scene_count", "outcome_prompt_count"],
+        "required": ["path"],
         "properties": {
-          "path": { "$ref": "#/$defs/safeRelativePath" },
-          "scene_count": { "type": "integer", "minimum": 1 },
-          "outcome_prompt_count": { "type": "integer", "minimum": 1 }
+          "path": { "$ref": "#/$defs/safeRelativePath" }
         }
       }
     }
@@ -109,12 +106,6 @@
           "minLength": 1,
           "pattern": "^[a-z0-9][a-z0-9_ -]*$",
           "$comment": "Lowercase snake/space canonical label."
-        },
-        "aliases": {
-          "type": "array",
-          "items": { "type": "string", "minLength": 1 },
-          "uniqueItems": true,
-          "$comment": "Judge-side aliases normalized to the canonical label."
         },
         "judge_notes": { "type": "string" },
         "reference_count": {
