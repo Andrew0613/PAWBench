@@ -1,0 +1,40 @@
+{
+  "schema_version": "pawbench.submission/v1",
+  "submission_id": "example-system-smoke",
+  "benchmark": {
+    "dataset_id": "PAWBench-example",
+    "benchmark_revision": 1
+  },
+  "system": "example-video-model",
+  "prompt_set": "gt_guided",
+  "scope": {
+    "splits": ["calibration", "coverage"]
+  },
+  "repeats_per_scene": 2,
+  "items": [
+    {
+      "scene_id": "SYN-C01",
+      "repeat_index": 0,
+      "status": "produced",
+      "video_path": "videos/SYN-C01__r000.mp4"
+    },
+    {
+      "scene_id": "SYN-C01",
+      "repeat_index": 1,
+      "status": "produced",
+      "video_path": "videos/SYN-C01__r001.mp4"
+    },
+    {
+      "scene_id": "SYN-P01",
+      "repeat_index": 0,
+      "status": "produced",
+      "video_path": "videos/SYN-P01__r000.mp4"
+    },
+    {
+      "scene_id": "SYN-P01",
+      "repeat_index": 1,
+      "status": "model_failure",
+      "failure_code": "generation_timeout"
+    }
+  ]
+}

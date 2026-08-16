@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Andrew0613/PAWBench/schemas/submission-v1.schema.json",
+  "title": "PAWBench submission (v1)",
+  "description": "Contract for a generated-video submission manifest. Item identity is (scene_id, repeat_index); items must cover the declared scope x repeats grid exactly, one row per slot. Draft status: authoritative validation lives in pawbench.submission.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "submission_id",
+    "benchmark",
+    "system",
+    "prompt_set",
+    "scope",
+    "repeats_per_scene",
+    "items"
+  ],
+  "properties": {
+    "schema_version": { "const": "pawbench.submission/v1" },
+    "submission_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$"
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_id", "benchmark_revision"],
+      "properties": {
+        "dataset_id": { "type": "string", "minLength": 1 },
+        "benchmark_revision": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "system": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "Name of the system under evaluation."
+    },
+    "prompt_set": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "Must name a prompt set declared by the bound benchmark package."
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["splits"],
+      "properties": {
+        "splits": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["calibration", "coverage"] }
+        },
+        "scene_ids": {
+          "type": ["array", "null"],
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "$comment": "Optional explicit scene subset. Absent or null means all scenes of the selected splits."
+        }
+      }
+    },
+    "repeats_per_scene": {
+      "type": "integer",
+      "minimum": 1,
+      "$comment": "K, the per-scene repeat count. Formal scoring requires the benchmark's declared formal K (50 for the official release)."
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/producedItem" },
+          { "$ref": "#/$defs/modelFailureItem" },
+          { "$ref": "#/$defs/infrastructureFailureItem" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "itemBase": {
+      "type": "object",
+      "required": ["scene_id", "repeat_index", "status"],
+      "properties": {
+        "scene_id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9-]*$" },
+        "repeat_index": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!\\.{1,2}(?:/|$))(?!.*(?:/|^)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "producedItem": {
+      "allOf": [{ "$ref": "#/$defs/itemBase" }],
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scene_id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9-]*$" },
+        "repeat_index": { "type": "integer", "minimum": 0 },
+        "status": { "const": "produced" },
+        "video_path": { "$ref": "#/$defs/safeRelativePath" }
+      },
+      "required": ["video_path"]
+    },
+    "modelFailureItem": {
+      "allOf": [{ "$ref": "#/$defs/itemBase" }],
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scene_id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9-]*$" },
+        "repeat_index": { "type": "integer", "minimum": 0 },
+        "status": { "const": "model_failure" },
+        "failure_code": {
+          "enum": ["generation_failed", "generation_timeout", "generation_refused"]
+        }
+      },
+      "required": ["failure_code"]
+    },
+    "infrastructureFailureItem": {
+      "allOf": [{ "$ref": "#/$defs/itemBase" }],
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scene_id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9-]*$" },
+        "repeat_index": { "type": "integer", "minimum": 0 },
+        "status": { "const": "infrastructure_failure" },
+        "failure_code": {
+          "enum": ["media_missing", "media_corrupt", "media_undecodable"]
+        }
+      },
+      "required": ["failure_code"]
+    }
+  }
+}

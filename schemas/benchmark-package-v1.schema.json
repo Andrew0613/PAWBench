@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Andrew0613/PAWBench/schemas/benchmark-package-v1.schema.json",
+  "title": "PAWBench benchmark package (v1)",
+  "description": "Contract for a public PAWBench benchmark package. The root schema validates benchmark.json. The '#/$defs/scene' subschema validates each line of scenes.jsonl, and '#/$defs/promptSetRow' validates each line of a prompt-set JSONL file. Draft status: authoritative validation lives in pawbench.benchmark; this schema documents the same contract for external tools and is double-run against the loader in tests.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "benchmark_revision",
+    "scene_table",
+    "source_image_root",
+    "prompt_sets"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "pawbench.benchmark_package/v1"
+    },
+    "dataset_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "benchmark_revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "scene_table": {
+      "type": "string",
+      "$comment": "Safe relative POSIX path to the scene table within the package.",
+      "$ref": "#/$defs/safeRelativePath"
+    },
+    "source_image_root": {
+      "type": "string",
+      "$ref": "#/$defs/safeRelativePath"
+    },
+    "prompt_sets": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "scene_count", "outcome_prompt_count"],
+        "properties": {
+          "path": { "$ref": "#/$defs/safeRelativePath" },
+          "scene_count": { "type": "integer", "minimum": 1 },
+          "outcome_prompt_count": { "type": "integer", "minimum": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "$comment": "Relative POSIX path rooted in the package: no leading slash, no drive letters, no URI scheme, and no '.' or '..' segments.",
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!\\.{1,2}(?:/|$))(?!.*(?:/|^)\\.{1,2}(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$",
+      "not": { "pattern": "(^|/)\\.(?!/|$)" }
+    },
+    "sceneId": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9-]*$"
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene_id",
+        "split",
+        "split_order",
+        "action",
+        "source_image_path",
+        "base_prompt",
+        "outcomes"
+      ],
+      "properties": {
+        "scene_id": { "$ref": "#/$defs/sceneId" },
+        "split": { "enum": ["calibration", "coverage"] },
+        "split_order": {
+          "type": "integer",
+          "minimum": 0,
+          "$comment": "Unique within the scene's split; not a global order."
+        },
+        "action": { "type": "string", "minLength": 1 },
+        "source_image_path": { "$ref": "#/$defs/safeRelativePath" },
+        "base_prompt": { "type": "string", "minLength": 1 },
+        "judge_notes": {
+          "type": "string",
+          "$comment": "Optional per-scene note rendered into judge prompts. Never contains reference counts."
+        },
+        "outcomes": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/outcome" }
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label"],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z0-9][a-z0-9_ -]*$",
+          "$comment": "Lowercase snake/space canonical label."
+        },
+        "aliases": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "$comment": "Judge-side aliases normalized to the canonical label."
+        },
+        "judge_notes": { "type": "string" },
+        "reference_count": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["numerator", "denominator"],
+          "properties": {
+            "numerator": { "type": "integer", "minimum": 1 },
+            "denominator": { "type": "integer", "minimum": 1 }
+          },
+          "$comment": "Exact rational reference mass. Required for every outcome of a calibration scene (fractions must sum to exactly 1); forbidden for coverage scenes."
+        }
+      },
+      "$comment": "The calibration/coverage reference_count condition is expressed at the scene level (see sceneCalibration / sceneCoverage), because split is a scene field."
+    },
+    "sceneCalibration": {
+      "allOf": [{ "$ref": "#/$defs/scene" }],
+      "properties": {
+        "split": { "const": "calibration" },
+        "outcomes": {
+          "items": { "required": ["label", "reference_count"] }
+        }
+      }
+    },
+    "sceneCoverage": {
+      "allOf": [{ "$ref": "#/$defs/scene" }],
+      "properties": {
+        "split": { "const": "coverage" },
+        "outcomes": {
+          "items": {
+            "not": { "required": ["reference_count"] }
+          }
+        }
+      }
+    },
+    "promptSetRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scene_id", "outcome_prompts"],
+      "properties": {
+        "scene_id": { "$ref": "#/$defs/sceneId" },
+        "outcome_prompts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["outcome_label", "prompt"],
+            "properties": {
+              "outcome_label": { "type": "string", "minLength": 1 },
+              "prompt": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

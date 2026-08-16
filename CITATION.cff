@@ -1,0 +1,10 @@
+# Placeholder: complete authors and add the paper DOI before public release.
+cff-version: 1.2.0
+message: "If you use PAWBench in your research, please cite it as below."
+title: PAWBench
+version: 0.1.0
+type: software
+authors:
+  - alias: PAWBench contributors
+repository-code: "https://github.com/Andrew0613/PAWBench"
+license: Apache-2.0

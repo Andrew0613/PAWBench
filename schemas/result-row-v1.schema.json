@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Andrew0613/PAWBench/schemas/result-row-v1.schema.json",
+  "title": "PAWEval result row (v1)",
+  "description": "One row per expected (scene, repeat) slot in rows.jsonl, including failure rows, so the denominator is always fully represented. Never contains endpoints, credentials, raw provider text, or local filesystem paths. Draft status: authoritative validation lives in pawbench.results.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scene_id",
+    "repeat_index",
+    "split",
+    "status",
+    "failure_code",
+    "outcome_readout",
+    "trustworthiness_audit",
+    "relaxed_included",
+    "strict_included",
+    "outcome_label"
+  ],
+  "properties": {
+    "schema_version": { "const": "paweval.result_row/v1" },
+    "scene_id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9-]*$" },
+    "repeat_index": { "type": "integer", "minimum": 0 },
+    "split": { "enum": ["calibration", "coverage"] },
+    "status": { "enum": ["judged", "model_failure", "infrastructure_failure"] },
+    "failure_code": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "enum": [
+            "generation_failed",
+            "generation_timeout",
+            "generation_refused",
+            "media_missing",
+            "media_corrupt",
+            "media_undecodable",
+            "judge_timeout",
+            "judge_network",
+            "judge_rate_limited",
+            "judge_server_error",
+            "judge_malformed_response"
+          ]
+        }
+      ]
+    },
+    "outcome_readout": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/outcomeReadout" }]
+    },
+    "trustworthiness_audit": {
+      "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/trustworthinessAudit" }]
+    },
+    "relaxed_included": {
+      "type": "boolean",
+      "$comment": "True iff the outcome axis yielded a readable in-vocabulary label."
+    },
+    "strict_included": {
+      "type": "boolean",
+      "$comment": "True iff relaxed_included and every trustworthiness gate passed."
+    },
+    "outcome_label": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1 }
+      ],
+      "$comment": "The scored (strict) label; canonical vocabulary of the scene."
+    }
+  },
+  "$defs": {
+    "failureAxes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "outcomeReadout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome_readable",
+        "outcome_in_schema",
+        "outcome_label",
+        "observed_result",
+        "failure_axes"
+      ],
+      "properties": {
+        "outcome_readable": { "type": "boolean" },
+        "outcome_in_schema": {
+          "enum": ["IN_SCHEMA", "NOT_READABLE", "OUT_OF_SCHEMA"]
+        },
+        "outcome_label": {
+          "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }]
+        },
+        "observed_result": {
+          "oneOf": [{ "type": "null" }, { "type": "string" }]
+        },
+        "failure_axes": { "$ref": "#/$defs/failureAxes" }
+      }
+    },
+    "auditBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "notes"],
+      "properties": {
+        "status": { "enum": ["PASS", "FAIL", "UNCLEAR", "NOT_APPLICABLE"] },
+        "notes": { "type": "string" }
+      }
+    },
+    "actionExecutionBlock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "target_hit",
+        "object_acquired",
+        "action_spec_followed",
+        "notes"
+      ],
+      "properties": {
+        "status": { "enum": ["PASS", "FAIL", "UNCLEAR", "NOT_APPLICABLE"] },
+        "target_hit": { "enum": ["YES", "NO", "UNCLEAR", "NOT_APPLICABLE"] },
+        "object_acquired": { "enum": ["YES", "NO", "UNCLEAR", "NOT_APPLICABLE"] },
+        "action_spec_followed": {
+          "enum": ["YES", "NO", "UNCLEAR", "NOT_APPLICABLE"]
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "trustworthinessAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "scene_grounding",
+        "action_execution",
+        "object_continuity",
+        "physical_process",
+        "failure_axes"
+      ],
+      "properties": {
+        "status": {
+          "enum": ["TRUSTED", "QUESTIONABLE", "UNTRUSTED", "UNCERTAIN"]
+        },
+        "scene_grounding": { "$ref": "#/$defs/auditBlock" },
+        "action_execution": { "$ref": "#/$defs/actionExecutionBlock" },
+        "object_continuity": { "$ref": "#/$defs/auditBlock" },
+        "physical_process": { "$ref": "#/$defs/auditBlock" },
+        "failure_axes": { "$ref": "#/$defs/failureAxes" }
+      }
+    }
+  }
+}
