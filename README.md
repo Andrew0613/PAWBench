@@ -35,6 +35,25 @@ scenes.jsonl
 Each scene describes its source image identity, action, prompt, and outcome
 ontology. The reference evaluator and metric consume that data directly.
 
+## Deterministic metric
+
+`compute_metrics(rows, scene_policy)` is available now and makes no VLM or
+network call. `rows` is a JSON-compatible list of normalized judgments. Every
+row has `sample_id`, `model_or_lane`, `track`, `scene_id`, `repeat_index`, and
+one of these observations:
+
+- `outcome` with an in-ontology `outcome_label`;
+- `null_observation`; or
+- `infrastructure_failure` with a `failure_code`.
+
+`scene_policy` names the evaluated model or lane and declares the 25
+Calibration and 25 Coverage scenes, each with its group, 50 repeat indices,
+and either a reference distribution (Calibration) or supported outcome labels
+(Coverage). The function validates this boundary, returns separate per-track
+and per-group aggregates plus scene-pass rates, and never creates a combined
+ranking. An unresolved infrastructure failure blocks its track instead of
+silently shrinking the denominator.
+
 ## Package boundary
 
 ```text

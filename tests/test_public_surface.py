@@ -21,11 +21,9 @@ def test_invented_public_protocol_modules_are_not_shipped(module: str) -> None:
     assert importlib.util.find_spec(f"pawbench.{module}") is None
 
 
-def test_unimplemented_journey_slots_are_truthful_and_offline() -> None:
+def test_evaluation_is_truthful_until_its_reference_path_is_released() -> None:
     with pytest.raises(NotImplementedError, match="not available yet"):
         pawbench.evaluate()
-    with pytest.raises(NotImplementedError, match="not available yet"):
-        pawbench.compute_metrics()
 
 
 def test_package_has_no_download_or_media_extras() -> None:
