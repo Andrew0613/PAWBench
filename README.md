@@ -1,72 +1,59 @@
 # PAWBench
 
-PAWBench asks whether video and world models reproduce the **outcome
-distribution** of physical scenes, rather than whether one generated clip
-merely looks plausible. A model is shown a source image and a physical
-action; PAWBench scores the distribution of final outcomes across repeats
-against a calibrated reference, with a strict trustworthiness gate.
+PAWBench evaluates whether a video model reproduces the outcome distribution
+of physical scenes. It compares repeated generated outcomes against a
+calibrated reference distribution; it is not a single-video plausibility test.
 
-**Status: pre-release (alpha).** Interfaces may change until the first
-public benchmark package is published.
+## Status
 
-## What it does
+**Pre-release.** This repository has been contracted to its truthful public
+boundary. The released public journey will be:
 
-PAWBench serves four jobs:
+```python
+from pawbench import compute_metrics, evaluate
+```
 
-1. **Load and validate a benchmark package** from Hugging Face or a local
-   directory (scenes, outcome vocabularies, exact calibration reference
-   counts, prompt sets).
-2. **Load, validate, and build a submission** of generated videos — one
-   slot per `(scene, repeat)`, with explicit failure rows so the
-   denominator can never shrink silently.
-3. **Run PAWEval**, the fixed two-axis VLM judge (`outcome_readout` +
-   `trustworthiness_audit`), over any OpenAI-compatible HTTPS endpoint.
-4. **Serialize and load public results** (`rows.jsonl` + `summary.json`)
-   with deterministic, reproducible output.
+`compute_metrics()` and `evaluate()` are intentionally present as the only
+public entry points, but are not available until the corresponding reference
+implementations are released. The package does not currently define a custom
+benchmark-package format, submission format, result-bundle format, downloader,
+command-line interface, model adapter, provider registry, scheduler, or
+experiment runtime.
 
-Scoring follows the retained V2 semantics: Calibration scenes are scored by
-total variation distance from the exact reference distribution; Coverage
-scenes by support recovery; per-scene failure is gated on error count, and
-model summaries are the unweighted macro over passing scenes. Full-grid
-submissions get a `formal` score comparable with the paper; partial grids
-get an explicitly flagged `diagnostic` score.
+## Benchmark data
+
+PAWBench consumes the released benchmark data contract rather than defining a
+second one. A benchmark release provides a manifest and a 50-scene table:
+
+```text
+manifest.json
+scenes.jsonl
+├── 25 calibration scenes with reference distributions
+└── 25 coverage scenes with supported outcome labels
+```
+
+Each scene describes its source image identity, action, prompt, and outcome
+ontology. The reference evaluator and metric consume that data directly.
+
+## Package boundary
+
+```text
+pawbench/
+├── evaluation.py   # high-level evaluation entry point
+└── metrics.py      # deterministic metric entry point
+
+examples/           # explains the release-data boundary
+tests/              # offline package-contract tests
+```
+
+The PAWEval reference implementation and rubric assets will be added behind
+`evaluate()` in a later release step. They remain implementation details, not
+a public judge SDK.
 
 ## Installation
 
 ```bash
-pip install pawbench            # core (validation + judge client)
-pip install "pawbench[eval]"    # + video frame extraction
-pip install "pawbench[hf]"      # + Hugging Face downloads
-pip install "pawbench[all]"     # everything
-```
-
-## Quickstart
-
-See [`examples/quickstart.py`](examples/quickstart.py). The example
-benchmark and submission under `examples/` are fully synthetic.
-
-```python
-import pawbench.benchmark
-import pawbench.submission
-
-benchmark = pawbench.benchmark.load("examples/benchmark")
-submission = pawbench.submission.load(
-    "examples/submission/submission.json", benchmark=benchmark
-)
-print(len(benchmark.scenes), "scenes,", len(submission.items), "items")
-```
-
-*(The quickstart grows with each module as it lands; judge evaluation is
-wired up in a later release wave.)*
-
-## Repository layout
-
-```text
-pawbench/    benchmark/ submission/ paweval/ results/   # public package
-schemas/     JSON Schemas for the four public contracts
-examples/    fully synthetic benchmark + submission + quickstart
-results/     result-bundle format documentation + synthetic example
-tests/       interface-level tests
+pip install pawbench
 ```
 
 ## License

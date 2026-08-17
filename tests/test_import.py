@@ -1,4 +1,4 @@
-"""Wave 1 acceptance: the package imports and exposes a version."""
+"""The public package imports and exposes a version."""
 
 
 def test_package_exposes_version() -> None:

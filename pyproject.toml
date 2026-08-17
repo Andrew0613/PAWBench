@@ -21,15 +21,11 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-# Core dependency stays minimal on purpose: validation-only users need nothing
-# beyond an HTTP layer. Media frame extraction and Hugging Face downloads are
-# optional extras so `pip install pawbench` stays light.
-dependencies = ["httpx>=0.27"]
+# Public evaluation and the deterministic metric land in later release steps.
+# This contracted package has no runtime dependency or download surface.
+dependencies = []
 
 [project.optional-dependencies]
-eval = ["opencv-python-headless>=4.9"]
-hf = ["huggingface-hub>=0.24"]
-all = ["opencv-python-headless>=4.9", "huggingface-hub>=0.24"]
 dev = ["pytest>=8", "ruff>=0.5"]
 
 [project.urls]
