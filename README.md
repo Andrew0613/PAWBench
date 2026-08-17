@@ -13,9 +13,8 @@ boundary. The released public journey will be:
 from pawbench import compute_metrics, evaluate
 ```
 
-`compute_metrics()` is available now. `evaluate()` remains present as the
-second public entry point and will be enabled with the complete evaluation
-journey. The package does not currently define a custom
+`compute_metrics()` and `evaluate()` are the two public entry points. The
+package does not define a custom
 benchmark-package format, submission format, result-bundle format, downloader,
 command-line interface, model adapter, provider registry, scheduler, or
 experiment runtime.
@@ -68,6 +67,20 @@ and either a reference distribution (Calibration) or supported outcome labels
 and per-group aggregates plus scene-pass rates, and never creates a combined
 ranking. An unresolved infrastructure failure blocks its track instead of
 silently shrinking the denominator.
+
+## Evaluation
+
+`evaluate(benchmark_path, videos, model_or_lane=..., vlm=...)` runs the full
+local journey. `benchmark_path` is an already-downloaded package with its
+`manifest.json` and `scenes.jsonl`. Each element of `videos` names one generated
+video with `sample_id`, `scene_id`, `repeat_index`, and `video_path`.
+
+The function derives the full 50 scenes × 50 repeats grid from the benchmark,
+judges each supplied video with PAWEval, and returns both metric-ready rows and
+the official metrics. Missing, duplicate, malformed, and failed items are
+returned as explicit blockers or infrastructure rows; they never shrink the
+denominator. `vlm` supplies only `base_url`, `model`, and `api_key_env` (plus
+optional timeout, token, and retry settings).
 
 ## Package boundary
 

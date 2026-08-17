@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import inspect
 from pathlib import Path
 
 import pytest
@@ -21,9 +22,13 @@ def test_invented_public_protocol_modules_are_not_shipped(module: str) -> None:
     assert importlib.util.find_spec(f"pawbench.{module}") is None
 
 
-def test_evaluation_is_truthful_until_its_reference_path_is_released() -> None:
-    with pytest.raises(NotImplementedError, match="not available yet"):
-        pawbench.evaluate()
+def test_evaluation_exposes_the_complete_public_journey() -> None:
+    assert tuple(inspect.signature(pawbench.evaluate).parameters) == (
+        "benchmark_path",
+        "videos",
+        "model_or_lane",
+        "vlm",
+    )
 
 
 def test_package_has_no_download_surface_and_media_is_opt_in() -> None:
