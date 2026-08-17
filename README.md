@@ -13,12 +13,27 @@ boundary. The released public journey will be:
 from pawbench import compute_metrics, evaluate
 ```
 
-`compute_metrics()` and `evaluate()` are intentionally present as the only
-public entry points, but are not available until the corresponding reference
-implementations are released. The package does not currently define a custom
+`compute_metrics()` is available now. `evaluate()` remains present as the
+second public entry point and will be enabled with the complete evaluation
+journey. The package does not currently define a custom
 benchmark-package format, submission format, result-bundle format, downloader,
 command-line interface, model adapter, provider registry, scheduler, or
 experiment runtime.
+
+The PAWEval reference implementation is now included as a private component of
+the forthcoming `evaluate()` journey. When that journey runs, it sends the
+source image and sampled frames from the generated video to the configured VLM
+provider for judgment. Install its local media decoder with:
+
+```bash
+pip install "pawbench[eval]"
+```
+
+Provider credentials, raw provider responses, local media paths, and internal
+run identifiers are not included in the resulting judgment rows.
+The released scene policy is also PAWEval's rubric source: its action and
+`outcome_labels` are rendered for the judge, so this repository does not ship
+a second, divergent set of per-scene rubrics.
 
 ## Benchmark data
 

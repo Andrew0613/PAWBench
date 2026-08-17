@@ -26,10 +26,10 @@ def test_evaluation_is_truthful_until_its_reference_path_is_released() -> None:
         pawbench.evaluate()
 
 
-def test_package_has_no_download_or_media_extras() -> None:
+def test_package_has_no_download_surface_and_media_is_opt_in() -> None:
     root = Path(__file__).resolve().parents[1]
     pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
 
     assert 'dependencies = []' in pyproject
     assert "huggingface-hub" not in pyproject
-    assert "opencv-python" not in pyproject
+    assert 'eval = ["opencv-python-headless>=4.9"]' in pyproject

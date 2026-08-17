@@ -26,6 +26,7 @@ classifiers = [
 dependencies = []
 
 [project.optional-dependencies]
+eval = ["opencv-python-headless>=4.9"]
 dev = ["pytest>=8", "ruff>=0.5"]
 
 [project.urls]
