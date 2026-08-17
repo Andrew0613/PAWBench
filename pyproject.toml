@@ -21,8 +21,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-# Public evaluation and the deterministic metric land in later release steps.
-# This contracted package has no runtime dependency or download surface.
+# Core installation has no runtime dependency or download surface. The optional
+# local-media decoder is needed only by ``evaluate()``.
 dependencies = []
 
 [project.optional-dependencies]

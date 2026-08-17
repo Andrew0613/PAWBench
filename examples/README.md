@@ -1,5 +1,6 @@
 # Examples
 
-PAWBench examples will use the released benchmark data contract. This
-pre-release package intentionally does not ship a synthetic benchmark package,
-submission envelope, or result-bundle format.
+[`quickstart.py`](quickstart.py) shows the supported Python workflow with an
+already-materialized benchmark package and generated-video rows. The repository
+intentionally does not ship a second benchmark-package, submission, or result
+format.

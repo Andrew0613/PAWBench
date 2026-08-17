@@ -6,8 +6,9 @@ calibrated reference distribution; it is not a single-video plausibility test.
 
 ## Status
 
-**Pre-release.** This repository has been contracted to its truthful public
-boundary. The released public journey will be:
+**Pre-release.** This repository is ready for an explicit later publication
+decision; this status does not publish data, a package, or a release. Its
+supported Python surface is:
 
 ```python
 from pawbench import compute_metrics, evaluate
@@ -19,8 +20,7 @@ benchmark-package format, submission format, result-bundle format, downloader,
 command-line interface, model adapter, provider registry, scheduler, or
 experiment runtime.
 
-The PAWEval reference implementation is now included as a private component of
-the forthcoming `evaluate()` journey. When that journey runs, it sends the
+PAWEval is a private component of `evaluate()`. When evaluation runs, it sends the
 source image and sampled frames from the generated video to the configured VLM
 provider for judgment. Install its local media decoder with:
 
@@ -48,6 +48,11 @@ scenes.jsonl
 
 Each scene describes its source image identity, action, prompt, and outcome
 ontology. The reference evaluator and metric consume that data directly.
+
+The official data location is the package pinned by the release manifest:
+`hf://Andrew613/PAWBench-Results@5fdea8a1e7a1e6ccf69bf5af9cf7947aefc58190/benchmark/PAWBench_V2`.
+Download or otherwise materialize that package locally before evaluation;
+PAWBench itself does not download from Hugging Face.
 
 ## Deterministic metric
 
@@ -82,6 +87,47 @@ returned as explicit blockers or infrastructure rows; they never shrink the
 denominator. `vlm` supplies only `base_url`, `model`, and `api_key_env` (plus
 optional timeout, token, and retry settings).
 
+The returned JSON-compatible object has `status`, `blockers`, `rows`, and
+`metrics`. Each row retains its sample, scene, model/lane, and repeat identity;
+it is either an `outcome`, a `null_observation`, or an
+`infrastructure_failure`. `metrics` contains separate `calibration` and
+`coverage` tracks—there is no combined ranking.
+
+## Quickstart
+
+Create a Python list of generated-video rows, then call the package directly:
+
+```python
+from pathlib import Path
+
+from pawbench import evaluate
+
+result = evaluate(
+    Path("/data/PAWBench_V2"),
+    [
+        {
+            "sample_id": "my-model::A-01::r000",
+            "scene_id": "A-01",
+            "repeat_index": 0,
+            "video_path": "/results/A-01/r000.mp4",
+        },
+        # one row for every scene and repeat in the released grid
+    ],
+    model_or_lane="my-model",
+    vlm={
+        "base_url": "https://your-vlm-provider.example/v1",
+        "model": "your-vlm-model",
+        "api_key_env": "YOUR_VLM_API_KEY",
+    },
+)
+print(result["status"], result["metrics"])
+```
+
+See [`examples/quickstart.py`](examples/quickstart.py) for the same workflow
+as a small editable script. `evaluate()` returns blocked output when the grid
+is incomplete or a provider/media problem occurs; it does not silently score a
+smaller benchmark.
+
 ## Package boundary
 
 ```text
@@ -93,9 +139,8 @@ examples/           # explains the release-data boundary
 tests/              # offline package-contract tests
 ```
 
-The PAWEval reference implementation and rubric assets will be added behind
-`evaluate()` in a later release step. They remain implementation details, not
-a public judge SDK.
+PAWEval and its scene-policy rubrics remain implementation details, not a
+public judge SDK.
 
 ## Installation
 
