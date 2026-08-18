@@ -31,7 +31,7 @@ def compute_metrics(
     benchmark denominator.
     """
 
-    policies = _validate_policy(scene_policy)
+    policies = validate_scene_policy(scene_policy)
     models = tuple(scene_policy["model_or_lanes"])
     indexed = _index_rows(rows, policies, models)
 
@@ -55,7 +55,13 @@ def compute_metrics(
     }
 
 
-def _validate_policy(scene_policy: Mapping[str, Any]) -> dict[str, list[Mapping[str, Any]]]:
+def validate_scene_policy(scene_policy: Mapping[str, Any]) -> dict[str, list[Mapping[str, Any]]]:
+    """Validate the released 25-calibration/25-coverage scene contract.
+
+    This remains an internal helper: ``compute_metrics`` is the public metric
+    interface.  ``evaluate`` also calls it before media extraction so an
+    invalid local benchmark cannot trigger provider requests.
+    """
     if not isinstance(scene_policy, Mapping):
         raise ValueError("scene policy must be an object")
     models = scene_policy.get("model_or_lanes")

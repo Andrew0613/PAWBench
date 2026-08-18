@@ -1,0 +1,36 @@
+# manual bridge rubric for 0049 legacy Track B scene
+schema_version: paweval.rubric/v1
+axis: outcome
+scene_id: TB-14
+track: track_b
+title_en: Table Tennis Serve (Legacy TB-14)
+outcome_question: Which label in ['ON_TABLE', 'OUT', 'NET'] is visible as the decisive serve result?
+readout_policy: Read the first decisive post-serve interaction involving the ball,
+  table, and net. A decisive net contact is NET; a readable valid table landing
+  is ON_TABLE; otherwise a readable miss outside the valid table area is OUT.
+canonical_labels:
+- ON_TABLE
+- OUT
+- NET
+label_aliases: {}
+unreadable_rules:
+- The ball-table-net relation is not readable at the decisive interaction.
+- Multiple serves or multiple balls occur and the judged serve cannot be identified.
+- Table or net geometry is missing, occluded, or unreadable.
+out_of_schema_rules:
+- The table, net, paddle, or ball visibly disappears, duplicates, or transforms so
+  the serve result is not auditable.
+- The video performs an unrelated action instead of a single serve toward the table
+  and net.
+priority_rules:
+- If the decisive failure is caused by a visible net contact, choose NET.
+- If the serve lands validly on the target table area without a decisive net result,
+  choose ON_TABLE.
+- If the serve misses the valid table area, leaves the table region, or cannot be
+  credited as a valid table landing, choose OUT.
+- Edge-grazing bounces are ON_TABLE only when valid table contact is clearly readable.
+- If the decisive interaction cannot be seen, return unreadable instead of guessing.
+notes:
+- This rubric preserves the 0049 legacy `TB-14` outcome space. It must not be aliased
+  to finalized `BC-03`, which is a different bowling scene.
+- Source outcome contract: PICAWorld vendor eval scene registry v1.

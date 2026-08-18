@@ -1,0 +1,48 @@
+schema_version: paweval.rubric/v1
+axis: outcome
+scene_id: BC-07
+track: track_b
+title_en: Object Throw at Can
+outcome_question: Which can-throw outcome in ['can_knocked_over', 'can_moves_upright', 'object_contacts_can_no_visible_can_motion',
+  'near_miss_on_table', 'clear_miss'] is visible as the first decisive result?
+readout_policy: 'Read the first decisive object/can relation after the single throw
+  and short normal response window: can knocked over, can moves while upright, contact
+  with no visible can motion, near miss on table, or clear miss. First contact alone
+  is not decisive while the can is still visibly responding.'
+canonical_labels:
+- can_knocked_over
+- can_moves_upright
+- object_contacts_can_no_visible_can_motion
+- near_miss_on_table
+- clear_miss
+label_aliases: {}
+unreadable_rules:
+- Evidence frames are occluded or cropped such that the canonical label cannot be determined.
+- Heavy motion blur prevents identifying the canonical label in any qualifying frame.
+- None of the canonical labels ['can_knocked_over', 'can_moves_upright', 'object_contacts_can_no_visible_can_motion',
+  'near_miss_on_table', 'clear_miss'] can be decisively identified within the readout window.
+out_of_schema_rules:
+- If disappearance, duplication, or teleportation prevents identifying a canonical label, return `unreadable`; if a readable label is already established, preserve the outcome and leave continuity failure to trustworthiness. Use out-of-schema only for visible events outside this rubric.
+- A post-action event occurs that is neither in canonical_labels nor in the scene's reference protocol;
+  record it as out-of-schema.
+priority_rules:
+- First decisive readout is object/can contact and can response after the single throw.
+- Wait through the short normal post-contact response before choosing contact-no-motion,
+  upright motion, or knocked-over; normal delayed can motion after contact is part
+  of the same outcome window.
+- can_knocked_over requires the can to tip or fall.
+- can_moves_upright requires visible can displacement, sliding, rotation, or spinning while the can remains
+  upright.
+- object_contacts_can_no_visible_can_motion requires visible thrown-object contact without visible can
+  displacement.
+- Contact labels beat no-contact miss labels; use near_miss_on_table only when the thrown object passes
+  close on the table without can contact.
+- 'Priority: knocked-over beats upright motion, upright motion beats contact-no-motion, contact beats
+  near miss, and clear miss is only for plainly off-target throws.'
+notes:
+- Label rename treats sliding and spinning as surface variants of the same upright-can-motion terminal
+  future.
+- 'Contact/trajectory scene: outcome label uses first decisive visible target interaction or miss geometry.'
+- 'Scene title: Object Throw at Can.'
+- 'Track B finalized content: scene-specific readout, priority, and tie-break rules are authored from
+  STAGBench metadata/action protocol.'

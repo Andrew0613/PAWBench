@@ -6,61 +6,102 @@ from pathlib import Path
 import pytest
 
 import pawbench.evaluation as evaluation
+import pawbench.metrics as metrics
+from pawbench.paweval.evidence.frames import EvidenceFrame
+from pawbench.paweval.judge.responses import JudgeResponse, parse_judge_response
+from pawbench.paweval.rubrics.loader import load_rubric
+
+
+def _scene_ids(track: str) -> list[str]:
+    outcome_root = Path(evaluation.__file__).parent / "paweval" / "rubrics" / "outcome"
+    all_ids = sorted(path.stem for path in outcome_root.glob("*.yaml"))
+    return [scene_id for scene_id in all_ids if scene_id.startswith("A")] if track == "calibration" else [
+        scene_id for scene_id in all_ids if not scene_id.startswith("A")
+    ]
 
 
 def write_benchmark(root: Path) -> None:
     root.mkdir()
-    (root / "tiny.mp4").write_bytes(b"synthetic-video-fixture")
+    images = root / "images"
+    images.mkdir()
+    scenes = []
+    for track in ("calibration", "coverage"):
+        for scene_id in _scene_ids(track):
+            labels = list(load_rubric("outcome", scene_id)["canonical_labels"])
+            source = images / f"{scene_id}.png"
+            source.write_bytes(b"source-image")
+            scene = {
+                "scene_id": scene_id,
+                "split": track,
+                "action": "Perform the scene action.",
+                "source_image_path": str(source.relative_to(root)),
+                "outcome_labels": labels if track == "calibration" else [labels[0]],
+            }
+            if track == "calibration":
+                scene["reference_distribution"] = {labels[0]: 1.0}
+            scenes.append(scene)
+    assert len(scenes) == 50
+    (root / "tiny.mp4").write_bytes(b"fixture")
     (root / "manifest.json").write_text(
         json.dumps({"schema_version": "pawbench.benchmark_inputs/v1", "scene_table": "scenes.jsonl"}),
         encoding="utf-8",
     )
-    scenes = []
-    for track in ("calibration", "coverage"):
-        for index in range(25):
-            scene = {
-                "scene_id": f"{'A' if track == 'calibration' else 'C'}-{index:02d}",
-                "split": track,
-                "action": "Roll the object once.",
-                "source_image_path": f"images/{track}-{index:02d}.png",
-                "outcome_labels": ["a", "b"],
-            }
-            if track == "calibration":
-                scene["reference_distribution"] = {"a": 0.5, "b": 0.5}
-            scenes.append(scene)
-    (root / "scenes.jsonl").write_text(
-        "\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8"
-    )
+    (root / "scenes.jsonl").write_text("\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8")
 
 
 def videos(root: Path) -> list[dict]:
     return [
         {
-            "sample_id": f"{track}-{index:02d}__r{repeat:03d}",
-            "scene_id": f"{'A' if track == 'calibration' else 'C'}-{index:02d}",
+            "sample_id": f"model-x::{scene_id}::r{repeat:03d}",
+            "scene_id": scene_id,
             "repeat_index": repeat,
             "video_path": root / "tiny.mp4",
         }
         for track in ("calibration", "coverage")
-        for index in range(25)
-        for repeat in range(50)
+        for scene_id in _scene_ids(track)
+        for repeat in range(evaluation.EXPECTED_ROLLOUTS)
     ]
 
 
-def fake_judge(item: dict, config: object) -> dict:
-    assert Path(item["video_path"]).is_file()
-    label = item["scene"]["outcome_labels"][item["repeat_index"] % 2]
-    return {
-        "sample_id": item["sample_id"],
-        "scene_id": item["scene_id"],
-        "track": item["track"],
-        "model_or_lane": item["model_or_lane"],
-        "repeat_index": item["repeat_index"],
-        "observation": "outcome",
-        "outcome_label": label,
-        "outcome_readout": {"scene_id": item["scene_id"], "outcome_label": label},
-        "trustworthiness_audit": {"scene_id": item["scene_id"], "status": "TRUSTED"},
-    }
+def fake_extract(*, sample_id: str, output_dir: Path, **_: object) -> tuple[EvidenceFrame, ...]:
+    frame = output_dir / f"{sample_id.replace(':', '_')}.jpg"
+    frame.write_bytes(b"frame")
+    return (
+        EvidenceFrame(f"{sample_id}:initial", "initial", frame.as_uri(), 0.0),
+        EvidenceFrame(f"{sample_id}:action", "action", frame.as_uri(), 0.5),
+        EvidenceFrame(f"{sample_id}:terminal", "terminal", frame.as_uri(), 1.0),
+    )
+
+
+class FakeJudgeClient:
+    def complete(self, request: object) -> JudgeResponse:
+        axis = request.axis
+        scene_id = request.scene_id
+        if axis == "outcome_readout":
+            payload = {
+                "scene_id": scene_id,
+                "outcome_readable": True,
+                "outcome_in_schema": "IN_SCHEMA",
+                "outcome_label": load_rubric("outcome", scene_id)["canonical_labels"][0],
+                "observed_result": "fixture",
+                "failure_axes": [],
+            }
+        else:
+            payload = {
+                "scene_id": scene_id,
+                "status": "TRUSTED",
+                "scene_grounding": {"status": "PASS"},
+                "action_execution": {
+                    "status": "PASS",
+                    "target_hit": "YES",
+                    "object_acquired": "YES",
+                    "action_spec_followed": "YES",
+                },
+                "object_continuity": {"status": "PASS"},
+                "physical_process": {"status": "PASS", "failure_phase": "NONE"},
+                "failure_axes": [],
+            }
+        return parse_judge_response(json.dumps(payload), axis=axis, scene_id=scene_id)
 
 
 def call(root: Path, rows: list[dict]) -> dict:
@@ -72,27 +113,30 @@ def call(root: Path, rows: list[dict]) -> dict:
     )
 
 
-def test_public_evaluation_journey_produces_judgments_and_official_metrics(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
+@pytest.fixture(autouse=True)
+def fake_evaluator(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(evaluation, "EXPECTED_ROLLOUTS", 1)
+    monkeypatch.setattr(metrics, "EXPECTED_ROLLOUTS", 1)
+    monkeypatch.setattr(evaluation, "extract_video_frames", fake_extract)
+    monkeypatch.setattr(evaluation, "OpenAICompatibleJudgeClient", lambda _: FakeJudgeClient())
+
+
+def test_public_evaluation_journey_runs_paweval_and_official_metrics(tmp_path: Path) -> None:
     root = tmp_path / "benchmark"
     write_benchmark(root)
-    monkeypatch.setattr(evaluation, "judge_item", fake_judge)
 
     result = call(root, videos(root))
 
     assert result["status"] == "ok"
-    assert len(result["rows"]) == 2500
+    assert len(result["rows"]) == 50
     assert result["metrics"]["status"] == "ok"
-    model = result["metrics"]["tracks"]
-    assert model["calibration"]["models"]["model-x"]["track_average"]["value"] == 0.0
-    assert model["coverage"]["models"]["model-x"]["track_average"]["value"] == 100.0
+    tracks = result["metrics"]["tracks"]
+    assert tracks["calibration"]["models"]["model-x"]["track_average"]["value"] == 0.0
+    assert tracks["coverage"]["models"]["model-x"]["track_average"]["value"] == 100.0
 
 
 @pytest.mark.parametrize("mutation", ["missing", "duplicate"])
-def test_missing_or_duplicate_videos_block_without_shrinking_the_grid(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, mutation: str
-) -> None:
+def test_missing_or_duplicate_videos_block_without_shrinking_the_grid(tmp_path: Path, mutation: str) -> None:
     root = tmp_path / "benchmark"
     write_benchmark(root)
     rows = videos(root)
@@ -100,11 +144,48 @@ def test_missing_or_duplicate_videos_block_without_shrinking_the_grid(
         rows.pop()
     else:
         rows.append(dict(rows[0]))
-    monkeypatch.setattr(evaluation, "judge_item", fake_judge)
 
     result = call(root, rows)
 
     assert result["status"] == "blocked"
-    assert len(result["rows"]) == 2500
+    assert len(result["rows"]) == 50
     assert result["metrics"]["status"] == "blocked"
     assert any(mutation in blocker for blocker in result["blockers"])
+
+
+def test_invalid_benchmark_contract_fails_before_media_or_judging(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    root = tmp_path / "benchmark"
+    write_benchmark(root)
+    scenes_path = root / "scenes.jsonl"
+    scenes = [json.loads(line) for line in scenes_path.read_text(encoding="utf-8").splitlines()]
+    scenes[0]["split"] = "coverage"
+    scenes_path.write_text("\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8")
+    monkeypatch.setattr(
+        evaluation,
+        "extract_video_frames",
+        lambda **_: pytest.fail("invalid benchmark must fail before media extraction"),
+    )
+
+    with pytest.raises(ValueError, match="calibration track policy must declare exactly 25 scenes"):
+        call(root, videos(root))
+
+
+def test_missing_rubric_fails_before_media_or_judging(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    root = tmp_path / "benchmark"
+    write_benchmark(root)
+    scenes_path = root / "scenes.jsonl"
+    scenes = [json.loads(line) for line in scenes_path.read_text(encoding="utf-8").splitlines()]
+    scenes[0]["scene_id"] = "missing-rubric"
+    scenes_path.write_text("\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8")
+    rows = videos(root)
+    rows[0] = {**rows[0], "scene_id": "missing-rubric"}
+    monkeypatch.setattr(
+        evaluation,
+        "extract_video_frames",
+        lambda **_: pytest.fail("missing rubric must fail before media extraction"),
+    )
+
+    with pytest.raises(ValueError, match="benchmark scene has no valid outcome rubric: missing-rubric"):
+        call(root, rows)

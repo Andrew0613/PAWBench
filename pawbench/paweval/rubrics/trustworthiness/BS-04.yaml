@@ -1,0 +1,57 @@
+schema_version: paweval.rubric/v1
+axis: trustworthiness
+scene_id: BS-04
+track: track_b
+title_en: Card Placement on Card Tower
+scene_grounding:
+- 'Initial state must match: A card tower stands on a table while a hand holds one
+  card near the top.'
+- Existing card tower, held card, hand, contact target, and table support must be
+  visible before placement.
+action_execution:
+- 'Required action: Place the held card onto the card tower once and let the tower
+  respond.'
+- The held card must contact or be placed onto the tower; hovering near the tower
+  or dropping elsewhere is action execution failure.
+- The placement and immediate tower/card response must stay visible through the
+  first stability/collapse readout.
+target_requirements:
+- Target object is the held card and its placement point on the card tower; both
+  must be identifiable at contact.
+- Card tower/stack continuity must be visible enough to separate placed-card fall,
+  top collapse, side collapse, and full collapse.
+object_continuity:
+- Existing tower cards and the placed card must remain traceable; no duplicate card,
+  missing tower segment, or repaint is allowed.
+- Collapsed cards must follow continuous falling paths and remain visible after
+  falling unless naturally occluded.
+apparatus_stability:
+- Table plane and tower base must stay fixed; the card tower cannot resize or change
+  construction mid-placement.
+motion_hard_failures:
+- 'Placement failure: held card never contacts the tower before the claimed response.'
+- 'Card/tower teleport: placed card or tower sections appear/disappear without
+  continuous placement or collapse motion.'
+- 'Collapse discontinuity: tower changes from standing to collapsed without visible
+  instability/falling.'
+post_result_consistency:
+- After decisive placement/collapse, card positions must remain physically consistent;
+  collapsed sections cannot rebuild and fallen placed cards cannot snap back onto
+  the tower.
+- A stable-card-placed label requires both the new card and tower to remain visible
+  and stable after contact.
+severity_rules:
+  fatal_for_strict_trusted:
+  - SCENE_GROUNDING_FAIL
+  - ACTION_EXECUTION_FAIL
+  - OBJECT_CONTINUITY_FAIL
+  - TRAJECTORY_INVALID
+  - APPARATUS_INSTABILITY
+  - POST_RESULT_INCONSISTENCY
+  - OBJECT_ACQUISITION_FAIL
+  nonfatal_warnings:
+  - MINOR_VISUAL_ARTIFACT
+  - READOUT_AMBIGUITY
+notes:
+- 'Scene title: Card Placement on Card Tower.'
+- 'Track B family: stability_stack.'

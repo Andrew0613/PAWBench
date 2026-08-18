@@ -5,11 +5,18 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
-from pawbench._paweval._client import VLMConfig
-from pawbench._paweval._judge import judge_item
-from pawbench.metrics import EXPECTED_ROLLOUTS, compute_metrics
+from pawbench.metrics import EXPECTED_ROLLOUTS, compute_metrics, validate_scene_policy
+from pawbench.paweval.evidence.extraction import extract_video_frames
+from pawbench.paweval.evidence.package import EvidencePackage
+from pawbench.paweval.evidence.sampling import FrameSamplingSpec
+from pawbench.paweval.evidence.source_image import SourceImageIdentity
+from pawbench.paweval.judge.client import OpenAICompatibleJudgeClient, ProviderConfig
+from pawbench.paweval.judge.requests import RowIdentity
+from pawbench.paweval.judgment import JudgmentConfig, JudgmentPreflightError, JudgmentSample, judge
+from pawbench.paweval.rubrics.loader import load_rubric
 
 
 def evaluate(
@@ -23,70 +30,139 @@ def evaluate(
 
     ``benchmark_path`` is an already-downloaded package containing
     ``manifest.json`` and its ``scenes.jsonl`` table. Each video row provides
-    `sample_id`, `scene_id`, `repeat_index`, and `video_path`. The benchmark's
-    50 scenes and the official 50 repeats per scene define the denominator.
-
-    Evaluation media is sent to the configured VLM provider. Returned rows do
-    not contain credentials, provider bodies, or local media paths.
+    ``sample_id``, ``scene_id``, ``repeat_index``, and ``video_path``. PAWEval
+    turns each supplied video plus its source image into an evidence
+    package, judges it with the scene's two rubrics, and returns metric-ready
+    rows without provider payloads or local media paths.
     """
 
     if not isinstance(model_or_lane, str) or not model_or_lane:
         raise ValueError("model_or_lane must be a nonempty string")
     root = Path(benchmark_path)
     policy, source_paths = _read_benchmark(root, model_or_lane)
-    config = _vlm_config(vlm)
+    provider = _provider_config(vlm)
     expected = {
         (scene["scene_id"], repeat): scene
         for track in policy["tracks"].values()
         for scene in track["scenes"]
         for repeat in scene["expected_repeat_indices"]
     }
-    supplied, item_blockers = _index_videos(videos, expected)
-
+    supplied, blockers = _index_videos(videos, expected)
     rows: list[dict[str, Any]] = []
-    for (scene_id, repeat), scene in expected.items():
-        video = supplied.get((scene_id, repeat))
-        fallback_id = f"{model_or_lane}::{scene_id}::r{repeat:03d}"
-        if video is None:
-            item_blockers.append(f"missing_video:{scene_id}:{repeat}")
-            rows.append(_failure(fallback_id, scene_id, scene["track"], model_or_lane, repeat, "missing_video"))
-            continue
-        if "error" in video:
-            rows.append(
-                _failure(
-                    str(video.get("sample_id") or fallback_id),
-                    scene_id,
-                    scene["track"],
-                    model_or_lane,
-                    repeat,
-                    str(video["error"]),
+    samples: list[JudgmentSample] = []
+
+    with TemporaryDirectory(prefix="pawbench-paweval-") as temporary_dir:
+        frame_root = Path(temporary_dir)
+        for (scene_id, repeat), scene in expected.items():
+            video = supplied.get((scene_id, repeat))
+            fallback_id = f"{model_or_lane}::{scene_id}::r{repeat:03d}"
+            if video is None:
+                blockers.append(f"missing_video:{scene_id}:{repeat}")
+                rows.append(_failure(fallback_id, scene_id, scene["track"], model_or_lane, repeat, "missing_video"))
+                continue
+            if "error" in video:
+                rows.append(
+                    _failure(
+                        str(video.get("sample_id") or fallback_id),
+                        scene_id,
+                        scene["track"],
+                        model_or_lane,
+                        repeat,
+                        str(video["error"]),
+                    )
                 )
-            )
-            continue
-        rows.append(
-            judge_item(
-                {
-                    "sample_id": video["sample_id"],
-                    "scene_id": scene_id,
-                    "track": scene["track"],
-                    "model_or_lane": model_or_lane,
-                    "repeat_index": repeat,
-                    "source_image_path": source_paths[scene_id],
-                    "video_path": video["video_path"],
-                    "scene": scene,
-                },
-                config,
-            )
-        )
+                continue
+            try:
+                samples.append(
+                    _build_sample(
+                        video=video,
+                        scene=scene,
+                        source_image_path=source_paths[scene_id],
+                        model_or_lane=model_or_lane,
+                        frame_root=frame_root,
+                    )
+                )
+            except (OSError, RuntimeError, ValueError) as exc:
+                rows.append(
+                    _failure(
+                        str(video["sample_id"]),
+                        scene_id,
+                        scene["track"],
+                        model_or_lane,
+                        repeat,
+                        f"evidence_build_failed:{type(exc).__name__}",
+                    )
+                )
+
+        if samples:
+            try:
+                rows.extend(_judge_samples(samples, provider))
+            except JudgmentPreflightError as exc:
+                rows.extend(
+                    _failure(
+                        sample.row_identity.sample_id,
+                        sample.row_identity.scene_id,
+                        sample.track,
+                        sample.row_identity.model_or_lane,
+                        int(sample.row_identity.repeat_index),
+                        str(exc),
+                    )
+                    for sample in samples
+                )
 
     metrics = compute_metrics(rows, policy)
-    blockers = sorted(set(item_blockers + list(metrics["blockers"])))
+    blockers = sorted(set(blockers + list(metrics["blockers"])))
     return {
         "status": "blocked" if blockers else "ok",
         "blockers": blockers,
         "rows": rows,
         "metrics": metrics,
     }
+
+
+def _build_sample(
+    *,
+    video: Mapping[str, Any],
+    scene: Mapping[str, Any],
+    source_image_path: Path,
+    model_or_lane: str,
+    frame_root: Path,
+) -> JudgmentSample:
+    sample_id = str(video["sample_id"])
+    scene_id = str(scene["scene_id"])
+    video_path = Path(str(video["video_path"]))
+    frames = extract_video_frames(
+        sample_id=sample_id,
+        video_path=video_path,
+        output_dir=frame_root,
+        sampling=FrameSamplingSpec(),
+    )
+    source = _source_identity(source_image_path)
+    package = EvidencePackage(
+        sample_id=sample_id,
+        scene_id=scene_id,
+        frames=frames,
+        source_image=source,
+    )
+    return JudgmentSample(
+        package=package,
+        track=scene["track"],
+        row_identity=RowIdentity.from_row(video, model_or_lane=model_or_lane),
+    )
+
+
+def _source_identity(path: Path) -> SourceImageIdentity:
+    if path.is_file():
+        return SourceImageIdentity(attached=True, uri=path.resolve().as_uri())
+    return SourceImageIdentity(attached=False, absent_reason="source_image_missing_in_local_package")
+
+
+def _judge_samples(samples: list[JudgmentSample], provider: ProviderConfig) -> list[dict[str, Any]]:
+    return judge(
+        samples=samples,
+        adapter=OpenAICompatibleJudgeClient(provider),
+        config=JudgmentConfig(),
+    ).normalized_rows()
 
 
 def _read_benchmark(root: Path, model_or_lane: str) -> tuple[dict[str, Any], dict[str, Path]]:
@@ -104,6 +180,7 @@ def _read_benchmark(root: Path, model_or_lane: str) -> tuple[dict[str, Any], dic
         "coverage": {"scenes": []},
     }
     source_paths: dict[str, Path] = {}
+    scene_ids: set[str] = set()
     for source in scenes:
         if not isinstance(source, Mapping):
             raise ValueError("benchmark scene rows must be JSON objects")
@@ -112,12 +189,13 @@ def _read_benchmark(root: Path, model_or_lane: str) -> tuple[dict[str, Any], dic
         labels = source.get("outcome_labels")
         if track not in tracks or not isinstance(scene_id, str) or not isinstance(labels, list):
             raise ValueError("benchmark scene has an invalid policy")
+        if scene_id in scene_ids:
+            raise ValueError(f"benchmark package contains duplicate scene_id: {scene_id}")
+        scene_ids.add(scene_id)
         scene = {
             "scene_id": scene_id,
             "track": track,
             "group": source.get("group") or track,
-            "action": source.get("action") or "",
-            "outcome_labels": labels,
             "expected_repeat_indices": list(range(EXPECTED_ROLLOUTS)),
         }
         if track == "calibration":
@@ -126,15 +204,30 @@ def _read_benchmark(root: Path, model_or_lane: str) -> tuple[dict[str, Any], dic
             scene["support_labels"] = labels
         tracks[track]["scenes"].append(scene)
         source_paths[scene_id] = root / str(source.get("source_image_path") or "")
-    return {"model_or_lanes": [model_or_lane], "tracks": tracks}, source_paths
+    policy = {"model_or_lanes": [model_or_lane], "tracks": tracks}
+    validate_scene_policy(policy)
+    for scene_id in scene_ids:
+        for axis in ("outcome", "trustworthiness"):
+            try:
+                load_rubric(axis, scene_id)
+            except (FileNotFoundError, ValueError) as exc:
+                raise ValueError(f"benchmark scene has no valid {axis} rubric: {scene_id}") from exc
+    return policy, source_paths
 
 
-def _vlm_config(values: Mapping[str, Any]) -> VLMConfig:
+def _provider_config(values: Mapping[str, Any]) -> ProviderConfig:
     if not isinstance(values, Mapping):
         raise ValueError("vlm must be an object")
     try:
-        return VLMConfig(**dict(values))
-    except TypeError as exc:
+        return ProviderConfig(
+            provider=str(values.get("provider") or "openai_compatible"),
+            model=str(values["model"]),
+            base_url=str(values["base_url"]),
+            api_key_env=str(values["api_key_env"]),
+            timeout=int(values.get("timeout", 120)),
+            max_tokens=int(values.get("max_tokens", 2048)),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
         raise ValueError("vlm must contain base_url, model, and api_key_env") from exc
 
 
@@ -172,7 +265,7 @@ def _index_videos(
             blockers.append(f"duplicate_sample_id:{scene_id}:{sample_id}")
             continue
         seen.add(sample_id)
-        supplied[slot] = {"sample_id": sample_id, "video_path": str(video_path)}
+        supplied[slot] = {"sample_id": sample_id, "scene_id": scene_id, "repeat_index": repeat, "video_path": str(video_path)}
     return supplied, blockers
 
 

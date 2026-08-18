@@ -21,9 +21,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-# Core installation has no runtime dependency or download surface. The optional
-# local-media decoder is needed only by ``evaluate()``.
-dependencies = []
+# PyYAML loads the versioned PAWEval scene rubrics shipped with the package.
+dependencies = ["PyYAML>=6.0"]
 
 [project.optional-dependencies]
 eval = ["opencv-python-headless>=4.9"]

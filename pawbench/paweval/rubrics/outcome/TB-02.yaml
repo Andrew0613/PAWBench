@@ -1,0 +1,40 @@
+# manual bridge rubric for 0049 legacy Track B scene
+schema_version: paweval.rubric/v1
+axis: outcome
+scene_id: TB-02
+track: track_b
+title_en: Ball Toss Into Cup (Legacy TB-02)
+outcome_question: Which label in ['IN_CUP', 'OUT_OF_CUP'] is visible as the terminal ball-cup relation?
+readout_policy: Read the terminal relation after the single toss interaction completes.
+  Qualifying frames must show the ball and cup relation clearly. Use the terminal
+  state for this legacy 0049 prompt-sensitivity scene because its source contract
+  defines only in-cup versus out-of-cup, not the finer BC-01 contact subtypes.
+canonical_labels:
+- IN_CUP
+- OUT_OF_CUP
+label_aliases:
+  clean_in_cup: IN_CUP
+  contact_then_in_cup: IN_CUP
+  cup_contact_then_out: OUT_OF_CUP
+  near_miss_no_cup_contact: OUT_OF_CUP
+  clear_miss: OUT_OF_CUP
+unreadable_rules:
+- The cup-ball relation is not visible in the terminal frame.
+- Multiple cups or balls appear and the judged relation is ambiguous.
+- Motion blur or occlusion prevents deciding whether the ball is inside the cup.
+out_of_schema_rules:
+- The ball, cup, or tabletop setup visibly disappears, duplicates, or transforms
+  so the final relation is not an auditable cup-toss result.
+- A second toss or different target defines the terminal state instead of the requested
+  single toss toward the cup.
+priority_rules:
+- Classify by terminal ball-cup relation only.
+- Use IN_CUP when the ball visibly ends inside the cup and remains there at the readout.
+- Use OUT_OF_CUP when the ball ends outside the cup, even if it contacted the rim
+  or cup during the toss.
+- If the terminal relation cannot be seen, return unreadable instead of guessing.
+notes:
+- This rubric preserves the 0049 legacy `TB-02` outcome space so prompt sensitivity
+  can be evaluated on the videos that were generated before Track B was promoted
+  into the richer STAGBench `BC-01` label set.
+- Source outcome contract: PICAWorld vendor eval scene registry v1.

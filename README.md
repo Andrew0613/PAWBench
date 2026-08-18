@@ -20,9 +20,11 @@ benchmark-package format, submission format, result-bundle format, downloader,
 command-line interface, model adapter, provider registry, scheduler, or
 experiment runtime.
 
-PAWEval is a private component of `evaluate()`. When evaluation runs, it sends the
-source image and sampled frames from the generated video to the configured VLM
-provider for judgment. Install its local media decoder with:
+PAWEval is the evaluator implementation used by `evaluate()`. Its source,
+prompt templates, and scene-specific rubrics are shipped in
+`pawbench/paweval/` for review and reproduction. When evaluation runs, it sends
+the source image and sampled frames from the generated video to the configured
+VLM provider for judgment. Install its local media decoder with:
 
 ```bash
 pip install "pawbench[eval]"
@@ -30,9 +32,11 @@ pip install "pawbench[eval]"
 
 Provider credentials, raw provider responses, local media paths, and internal
 run identifiers are not included in the resulting judgment rows.
-The released scene policy is also PAWEval's rubric source: its action and
-`outcome_labels` are rendered for the judge, so this repository does not ship
-a second, divergent set of per-scene rubrics.
+The benchmark provides the measured scene and reference distribution; PAWEval
+loads one outcome rubric and one trustworthiness rubric by `scene_id`. The
+public release contains 50 rubrics on each axis, for 100 files in total. The
+two are intentionally separate: the benchmark defines what is evaluated, while
+the rubric defines how evidence is judged.
 
 ## Benchmark data
 
@@ -85,7 +89,7 @@ judges each supplied video with PAWEval, and returns both metric-ready rows and
 the official metrics. Missing, duplicate, malformed, and failed items are
 returned as explicit blockers or infrastructure rows; they never shrink the
 denominator. `vlm` supplies only `base_url`, `model`, and `api_key_env` (plus
-optional timeout, token, and retry settings).
+optional timeout and token settings).
 
 The returned JSON-compatible object has `status`, `blockers`, `rows`, and
 `metrics`. Each row retains its sample, scene, model/lane, and repeat identity;
@@ -132,15 +136,23 @@ smaller benchmark.
 
 ```text
 pawbench/
-├── evaluation.py   # high-level evaluation entry point
-└── metrics.py      # deterministic metric entry point
+├── __init__.py             # exports only evaluate and compute_metrics
+├── evaluation.py           # local benchmark → PAWEval → metrics
+├── metrics.py              # deterministic official metrics
+└── paweval/                # visible evaluator implementation, not a judge SDK
+    ├── judgment.py         # two-axis judgment orchestration
+    ├── adapter.py          # multimodal request construction
+    ├── evidence/           # frame sampling, extraction, and local media package
+    ├── judge/              # OpenAI-compatible client, parsing, and retry
+    └── rubrics/            # loader, validation, 50 outcome + 50 trust rubrics
 
 examples/           # explains the release-data boundary
-tests/              # offline package-contract tests
+tests/              # metric, evaluator, rubric, and public-interface tests
 ```
 
-PAWEval and its scene-policy rubrics remain implementation details, not a
-public judge SDK.
+PAWEval remains an implementation detail, not a public judge SDK. The public
+package has no CLI, downloader, provider registry, experiment runner, run
+identity, artifact ledger, or media-hash workflow.
 
 ## Installation
 
