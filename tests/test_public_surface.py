@@ -57,9 +57,19 @@ def test_paweval_is_a_visible_implementation_package_with_versioned_rubrics() ->
 
 @pytest.mark.parametrize(
     "scene_id",
-    ["BA-01-02", "BA-01-S1", "BA-02-S2", "BC-01-I1", "BC-01-I2", "BC-03-I1", "BS-01-I1", "BS-01-S1"],
+    ["BA-02-S2", "BC-01-I1", "BC-07", "BC-10", "BS-01-S1", "BS-04", "TB-02", "TB-14"],
 )
-def test_internal_rubric_variants_are_not_shipped(scene_id: str) -> None:
+def test_non_v2_rubrics_are_not_shipped(scene_id: str) -> None:
     root = Path(__file__).resolve().parents[1] / "pawbench" / "paweval" / "rubrics"
     assert not (root / "outcome" / f"{scene_id}.yaml").exists()
     assert not (root / "trustworthiness" / f"{scene_id}.yaml").exists()
+
+
+@pytest.mark.parametrize(
+    "scene_id",
+    ["BA-01-02", "BA-01-S1", "BC-01-I2", "BC-03-I1", "BS-01-I1"],
+)
+def test_v2_scene_variants_are_shipped(scene_id: str) -> None:
+    root = Path(__file__).resolve().parents[1] / "pawbench" / "paweval" / "rubrics"
+    assert (root / "outcome" / f"{scene_id}.yaml").is_file()
+    assert (root / "trustworthiness" / f"{scene_id}.yaml").is_file()

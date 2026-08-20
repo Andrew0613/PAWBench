@@ -1,33 +1,40 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
-scene_id: BC-10
+scene_id: BA-01-S1
 track: track_b
-title_en: Paper Airplane Landing Zones
+title_en: Cat Touch Reaction State Variant
 scene_grounding:
-- 'Initial state must match: A paper airplane is ready to be thrown from the visible
-  thrower pose toward colored landing zones on the floor.'
+- 'Initial state must match: A cat-touch state variant of `BA-01`, with the cat in
+  a different initial pose.'
 - Apparatus geometry in the opening frames must match the source image.
 action_execution:
-- 'Required action: Throw the paper airplane once from the visible thrower pose toward
-  the landing zones.'
+- 'Required action: Gently touch the cat once.'
 - Action must happen exactly once in the expected direction / region.
 - Action target must be identifiable in the same frame as the action onset (Track
   B target acquisition).
 - The action must be visible as a single continuous event from the described initial
   state; cuts, hidden starts, or repeated attempts are action-execution failures.
-- For contact labels, the object trajectory from release/kick/throw/roll to target
-  or miss must be continuous enough to audit contact.
+- For reaction labels, the stimulus timing must be visible before the animal/person
+  reaction is scored.
 target_requirements:
-- Paper airplane, thrower, colored mat zones, gray zone, and outside-mat boundary
-  must be visible at throw and final rest.
-- The airplane must fly continuously from the thrower to the final nose/tip position;
-  zone changes after rest are POST_RESULT_INCONSISTENCY.
+- State-variant cat and touching hand must remain visible enough to separate initial
+  posture from post-touch reaction.
+- Cat identity and hand identity must stay continuous; a different animal or hand
+  appearing mid-run is OBJECT_CONTINUITY_FAIL.
+- The touch/stimulus must be visible before any reaction label is trusted; continuing
+  the initial alert/resting pose without visible hand entry/touch is ACTION_EXECUTION_FAIL
+  rather than a valid remains-still outcome.
+- Active defensive contact, defensive posture, withdrawal, leaving, accepting contact,
+  and stillness must be attributable to the same visible cat and hand through a continuous
+  post-touch window.
 object_continuity:
 - Subject object(s) must not disappear, duplicate, or teleport during the readout
   window.
 - Color / identity of the subject must remain consistent across frames.
 - 'Identity continuity is fatal: the judged subject, target, and key apparatus must
   not swap appearance, duplicate, vanish, or re-enter as a different object/person/animal.'
+- Animal body orientation and person/hand/stimulus identity must remain trackable
+  across the reaction window.
 apparatus_stability:
 - Scene-defining apparatus, target geometry, and support surfaces must not drift, resize, or change color mid-run.
 motion_hard_failures:
@@ -35,8 +42,6 @@ motion_hard_failures:
 - 'Post-readout state/region change: subject moves between label-defining states or regions after the first decisive readout.'
 - 'Post-result side change: label-defining region changes after the first decisive
   post-action frame.'
-- Outcome label changes (e.g., from miss to score) via a non-physical motion after
-  the first decisive contact frame.
 post_result_consistency:
 - Post-result frames must remain physically consistent with the readout label.
 - No retroactive change of the outcome label via physically impossible motion after
@@ -54,9 +59,9 @@ severity_rules:
   - MINOR_VISUAL_ARTIFACT
   - READOUT_AMBIGUITY
 notes:
-- 'Scene title: Paper Airplane Landing Zones.'
+- 'Scene title: Cat Touch Reaction State Variant.'
 - 'Fatal severity cue: target/stimulus acquisition failure, impossible trajectory,
   identity discontinuity, or post-result contradiction excludes strict trusted metrics
   even if the outcome is readable.'
-- 'BC contact trust cue: target contact/hit/miss geometry, continuous trajectory,
-  collision consistency, and apparatus stability are mandatory.'
+- 'BA reaction trust cue: animal/person/stimulus visibility, attribution to the requested
+  action, off-screen-cause rejection, and identity continuity are mandatory.'

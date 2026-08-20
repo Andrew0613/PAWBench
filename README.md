@@ -1,105 +1,118 @@
+<div align="center">
+
 # PAWBench
 
-PAWBench evaluates whether a video model reproduces the outcome distribution
-of physical scenes. It compares repeated generated outcomes against a
-calibrated reference distribution; it is not a single-video plausibility test.
+### Evaluating distributional physical realism in generated videos
 
-## Status
+**PAWBench asks whether a video model reproduces the range of outcomes that a physical scene can produce—not whether one video merely looks plausible.**
 
-**Pre-release.** This repository is ready for an explicit later publication
-decision; this status does not publish data, a package, or a release. Its
-supported Python surface is:
+</div>
 
-```python
-from pawbench import compute_metrics, evaluate
+> [!WARNING]
+> **Pre-release repository.** The evaluator code and rubric roster are ready for review. The benchmark data are hosted separately on Hugging Face; public release and leaderboard publication remain separate decisions.
+
+## Overview
+
+Physical processes are stochastic: the same action can lead to several valid
+outcomes. A realistic video generator should therefore reproduce a *distribution*
+of outcomes across repeated samples, rather than optimize for one visually
+convincing trajectory.
+
+PAWBench measures that capability with a fixed set of physical scenes. For each
+scene, a model generates repeated videos from the same source image and action.
+PAWEval reads the generated evidence with a scene-specific outcome rubric and a
+trustworthiness audit; the official metrics then compare observed outcomes with
+the released reference contract.
+
+| Benchmark component | Released contract |
+| --- | --- |
+| Scenes | 50 physical scenes: 25 Calibration and 25 Coverage |
+| Rollouts | 50 generated videos per scene |
+| Calibration target | Reference outcome distribution |
+| Coverage target | Set of supported outcome labels |
+| PAWEval rubrics | 50 outcome + 50 trustworthiness YAML files |
+| Public Python API | `evaluate()` and `compute_metrics()` |
+
+## What PAWBench measures
+
+PAWBench has two complementary tracks.
+
+| Track | Question | Official metric |
+| --- | --- | --- |
+| **Calibration** | Does the model reproduce how frequently each outcome occurs? | Total variation distance (TVD); lower is better. |
+| **Coverage** | Does the model produce every outcome the scene supports? | Support coverage; higher is better. |
+
+The tracks stay separate. PAWBench intentionally does **not** collapse them
+into a single leaderboard score: matching a distribution and discovering its
+support are different capabilities.
+
+## Evaluation at a glance
+
+```text
+local benchmark package + 50 × 50 generated videos
+                         │
+                         ▼
+              PAWEval evidence and rubrics
+              ├── outcome readout
+              └── trustworthiness audit
+                         │
+                         ▼
+        normalized judgment rows → official metrics
 ```
 
-`compute_metrics()` and `evaluate()` are the two public entry points. The
-package does not define a custom
-benchmark-package format, submission format, result-bundle format, downloader,
-command-line interface, model adapter, provider registry, scheduler, or
-experiment runtime.
+`evaluate()` runs this complete local journey. `compute_metrics()` is the
+deterministic metric-only entry point for already-normalized judgment rows.
+There is no CLI, downloader, model registry, submission protocol, or experiment
+framework hidden behind those functions.
 
-PAWEval is the evaluator implementation used by `evaluate()`. Its source,
-prompt templates, and scene-specific rubrics are shipped in
-`pawbench/paweval/` for review and reproduction. When evaluation runs, it sends
-the source image and sampled frames from the generated video to the configured
-VLM provider for judgment. Install its local media decoder with:
+## Installation
+
+Clone this repository and install the evaluator from source. Frame extraction
+requires the optional `eval` dependencies.
 
 ```bash
-pip install "pawbench[eval]"
+git clone https://github.com/Andrew0613/PAWBench.git
+cd PAWBench
+
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[eval]"
 ```
 
-Provider credentials, raw provider responses, local media paths, and internal
-run identifiers are not included in the resulting judgment rows.
-The benchmark provides the measured scene and reference distribution; PAWEval
-loads one outcome rubric and one trustworthiness rubric by `scene_id`. The
-public release contains 50 rubrics on each axis, for 100 files in total. The
-two are intentionally separate: the benchmark defines what is evaluated, while
-the rubric defines how evidence is judged.
+The core package depends only on PyYAML. It does not download benchmark data or
+contact a provider during installation.
 
 ## Benchmark data
 
-PAWBench consumes the released benchmark data contract rather than defining a
-second one. A benchmark release provides a manifest and a 50-scene table:
+PAWBench expects an already-materialized benchmark package. The evaluator does
+not prescribe where you store it or download it on your behalf.
 
 ```text
-manifest.json
-scenes.jsonl
-├── 25 calibration scenes with reference distributions
-└── 25 coverage scenes with supported outcome labels
+PAWBench/
+├── manifest.json
+├── scenes.jsonl
+├── source_images/          # source images referenced by scenes.jsonl
+└── prompts/gt_guided/      # optional prompt bank used by guided experiments
 ```
 
-Each scene describes its source image identity, action, prompt, and outcome
-ontology. The reference evaluator and metric consume that data directly.
+The released scene table defines 50 scenes. Each row contains a `scene_id`,
+the `split` (`calibration` or `coverage`), a `source_image_path`, outcome
+labels, and either:
 
-The official data location is the package pinned by the release manifest:
-`hf://Andrew613/PAWBench-Results@5fdea8a1e7a1e6ccf69bf5af9cf7947aefc58190/benchmark/PAWBench_V2`.
-Download or otherwise materialize that package locally before evaluation;
-PAWBench itself does not download from Hugging Face.
+- `reference_distribution` for a Calibration scene; or
+- the supported `outcome_labels` for a Coverage scene.
 
-## Deterministic metric
+The benchmark package is hosted at
+[`Andrew613/PAWBench`](https://huggingface.co/datasets/Andrew613/PAWBench).
+It is a clean distribution of the PAWBench V2 input contract used for the
+reported evaluations. Materialize it locally before evaluation.
 
-`compute_metrics(rows, scene_policy)` is available now and makes no VLM or
-network call. `rows` is a JSON-compatible list of normalized judgments. Every
-row has `sample_id`, `model_or_lane`, `track`, `scene_id`, `repeat_index`, and
-one of these observations:
+## Quick start: evaluate generated videos
 
-- `outcome` with an in-ontology `outcome_label`;
-- `null_observation`; or
-- `infrastructure_failure` with a `failure_code`.
-
-`scene_policy` names the evaluated model or lane and declares the 25
-Calibration and 25 Coverage scenes, each with its group, 50 repeat indices,
-and either a reference distribution (Calibration) or supported outcome labels
-(Coverage). The function validates this boundary, returns separate per-track
-and per-group aggregates plus scene-pass rates, and never creates a combined
-ranking. An unresolved infrastructure failure blocks its track instead of
-silently shrinking the denominator.
-
-## Evaluation
-
-`evaluate(benchmark_path, videos, model_or_lane=..., vlm=...)` runs the full
-local journey. `benchmark_path` is an already-downloaded package with its
-`manifest.json` and `scenes.jsonl`. Each element of `videos` names one generated
-video with `sample_id`, `scene_id`, `repeat_index`, and `video_path`.
-
-The function derives the full 50 scenes × 50 repeats grid from the benchmark,
-judges each supplied video with PAWEval, and returns both metric-ready rows and
-the official metrics. Missing, duplicate, malformed, and failed items are
-returned as explicit blockers or infrastructure rows; they never shrink the
-denominator. `vlm` supplies only `base_url`, `model`, and `api_key_env` (plus
-optional timeout and token settings).
-
-The returned JSON-compatible object has `status`, `blockers`, `rows`, and
-`metrics`. Each row retains its sample, scene, model/lane, and repeat identity;
-it is either an `outcome`, a `null_observation`, or an
-`infrastructure_failure`. `metrics` contains separate `calibration` and
-`coverage` tracks—there is no combined ranking.
-
-## Quickstart
-
-Create a Python list of generated-video rows, then call the package directly:
+Provide one item per generated video. Each item identifies the scene and its
+repeat index, then points to the local MP4. `evaluate()` derives the complete
+50-scene × 50-rollout grid from the benchmark package; it never infers a
+smaller denominator from the videos that happen to be present.
 
 ```python
 from pathlib import Path
@@ -107,7 +120,7 @@ from pathlib import Path
 from pawbench import evaluate
 
 result = evaluate(
-    Path("/data/PAWBench_V2"),
+    Path("/data/PAWBench"),
     [
         {
             "sample_id": "my-model::A-01::r000",
@@ -115,7 +128,7 @@ result = evaluate(
             "repeat_index": 0,
             "video_path": "/results/A-01/r000.mp4",
         },
-        # one row for every scene and repeat in the released grid
+        # Add one row for every scene and repeat in the released grid.
     ],
     model_or_lane="my-model",
     vlm={
@@ -124,42 +137,104 @@ result = evaluate(
         "api_key_env": "YOUR_VLM_API_KEY",
     },
 )
-print(result["status"], result["metrics"])
+
+print(result["status"])
+print(result["metrics"])
 ```
 
-See [`examples/quickstart.py`](examples/quickstart.py) for the same workflow
-as a small editable script. `evaluate()` returns blocked output when the grid
-is incomplete or a provider/media problem occurs; it does not silently score a
-smaller benchmark.
+Set the provider key in the named environment variable before running:
 
-## Package boundary
+```bash
+export YOUR_VLM_API_KEY="..."
+```
+
+The full editable example is in [`examples/quickstart.py`](examples/quickstart.py).
+
+## Metric-only use
+
+If PAWEval judgment rows have already been produced, compute official metrics
+without decoding media or calling a VLM:
+
+```python
+from pawbench import compute_metrics
+
+metrics = compute_metrics(rows, scene_policy)
+```
+
+For Calibration, PAWBench reports
+
+```text
+TVD (%) = 100 × ½ × Σ |observed outcome frequency − reference probability|
+```
+
+For Coverage, it reports
+
+```text
+Coverage (%) = 100 × |observed labels ∩ supported labels| / |supported labels|
+```
+
+Metric output contains separate per-track, per-group, and scene-pass-rate
+aggregates. It does not return a combined ranking.
+
+## PAWEval and rubrics
+
+`pawbench/paweval/` is fully visible for review and reproduction, while the
+package root deliberately exposes only `evaluate` and `compute_metrics`.
+
+For each video, PAWEval:
+
+1. samples frames and combines them with the scene source image;
+2. renders the fixed outcome and trustworthiness instructions with the
+   scene-specific rubric;
+3. sends the multimodal request to the configured OpenAI-compatible VLM; and
+4. parses the two structured responses into a normalized judgment row.
+
+The 100 YAML rubrics are versioned in
+[`pawbench/paweval/rubrics`](pawbench/paweval/rubrics): 50 outcome rubrics and
+50 trustworthiness rubrics. The outcome readout supplies the official metric
+label. The trustworthiness audit is retained alongside each judgment as a
+diagnostic record; it is not a second aggregate score.
+
+## Reproducibility and failure semantics
+
+PAWBench is strict about the benchmark denominator.
+
+- Missing, duplicate, malformed, or failed video items become explicit
+  infrastructure rows or blockers; they never reduce the 50-rollout target.
+- An invalid 50-scene policy or a missing/mismatched rubric fails before media
+  extraction or provider calls.
+- Provider credentials, raw responses, local media paths, and internal run
+  identifiers are not returned in the public result object.
+- The result object always contains `status`, `blockers`, `rows`, and `metrics`.
+
+This policy makes a blocked evaluation distinguishable from a lower-scoring,
+but complete, model run.
+
+## Repository layout
 
 ```text
 pawbench/
-├── __init__.py             # exports only evaluate and compute_metrics
+├── __init__.py             # public API: evaluate, compute_metrics
 ├── evaluation.py           # local benchmark → PAWEval → metrics
 ├── metrics.py              # deterministic official metrics
-└── paweval/                # visible evaluator implementation, not a judge SDK
-    ├── judgment.py         # two-axis judgment orchestration
-    ├── adapter.py          # multimodal request construction
-    ├── evidence/           # frame sampling, extraction, and local media package
-    ├── judge/              # OpenAI-compatible client, parsing, and retry
-    └── rubrics/            # loader, validation, 50 outcome + 50 trust rubrics
+└── paweval/
+    ├── adapter.py          # local media → multimodal request payload
+    ├── evidence/           # sampling and frame extraction
+    ├── judge/              # OpenAI-compatible request, parsing, retry
+    ├── judgment.py         # two-axis PAWEval orchestration
+    └── rubrics/            # 100 versioned scene rubrics
 
-examples/           # explains the release-data boundary
-tests/              # metric, evaluator, rubric, and public-interface tests
+examples/                   # minimal local workflow
+tests/                      # metric, evaluator, rubric, and API checks
 ```
 
-PAWEval remains an implementation detail, not a public judge SDK. The public
-package has no CLI, downloader, provider registry, experiment runner, run
-identity, artifact ledger, or media-hash workflow.
+## Citation
 
-## Installation
-
-```bash
-pip install pawbench
-```
+The paper and canonical citation will be added with the public benchmark
+release. Until then, please cite the exact repository commit used for an
+evaluation rather than treating this pre-release checkout as a published
+benchmark version.
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+PAWBench is released under the [Apache License 2.0](LICENSE).
