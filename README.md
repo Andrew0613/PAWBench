@@ -1,5 +1,11 @@
 # PAWBench: How Far Are We from Probabilistically Aligned World Modeling?
 
+<p align="center">
+  Paper (arXiv: coming soon) · Project Page (coming soon) ·
+  <a href="https://huggingface.co/datasets/Andrew613/PAWBench">Hugging Face Dataset</a> ·
+  Leaderboard (coming soon)
+</p>
+
 > [!WARNING]
 > **Pre-release repository.** The evaluator code and rubric roster are ready for review. The benchmark data are hosted separately on Hugging Face; public release and leaderboard publication remain separate decisions.
 
