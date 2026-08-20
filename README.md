@@ -1,12 +1,4 @@
-<div align="center">
-
-# PAWBench
-
-### Evaluating distributional physical realism in generated videos
-
-**PAWBench asks whether a video model reproduces the range of outcomes that a physical scene can produce—not whether one video merely looks plausible.**
-
-</div>
+# PAWBench: How Far Are We from Probabilistically Aligned World Modeling?
 
 > [!WARNING]
 > **Pre-release repository.** The evaluator code and rubric roster are ready for review. The benchmark data are hosted separately on Hugging Face; public release and leaderboard publication remain separate decisions.
