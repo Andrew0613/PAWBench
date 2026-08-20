@@ -1,9 +1,21 @@
 # PAWBench: How Far Are We from Probabilistically Aligned World Modeling?
 
 <p align="center">
-  Paper (arXiv: coming soon) · Project Page (coming soon) ·
-  <a href="https://huggingface.co/datasets/Andrew613/PAWBench">Hugging Face Dataset</a> ·
-  Leaderboard (coming soon)
+  <a href="#citation">
+    <img src="https://img.shields.io/badge/PAPER-coming_soon-555555?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Paper: coming soon">
+  </a>
+  <a href="#citation">
+    <img src="https://img.shields.io/badge/arXiv-coming_soon-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white" alt="arXiv: coming soon">
+  </a>
+  <a href="#citation">
+    <img src="https://img.shields.io/badge/PROJECT-PAGE-555555?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Project page: coming soon">
+  </a>
+  <a href="https://huggingface.co/datasets/Andrew613/PAWBench">
+    <img src="https://img.shields.io/badge/%F0%9F%A4%97_Dataset-PAWBench-FFD21E?style=for-the-badge" alt="Hugging Face dataset">
+  </a>
+  <a href="#citation">
+    <img src="https://img.shields.io/badge/LEADERBOARD-coming_soon-555555?style=for-the-badge&logo=trophy&logoColor=white" alt="Leaderboard: coming soon">
+  </a>
 </p>
 
 > [!WARNING]
