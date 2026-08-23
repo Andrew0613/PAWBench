@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BS-01
-track: track_b
+track: coverage
 title_en: Bottle Flip Landing on Table
 outcome_question: Which label in ['upright_on_base', 'balanced_on_cap', 'side_laying',
   'leaning_against_visible_support'] is visible as the first decisive post-action

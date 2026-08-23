@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BS-02
-track: track_b
+track: coverage
 title_en: Red-Marked Block Tower Removal
 scene_grounding:
 - 'Initial state must match: A hand is about to pull the block marked with a red dot from a structurally

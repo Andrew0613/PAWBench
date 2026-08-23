@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BS-01
-track: track_b
+track: coverage
 title_en: Bottle Flip Landing on Table
 scene_grounding:
 - 'Initial state must match: A hand holds a water bottle above a table.'

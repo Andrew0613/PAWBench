@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A22
-track: track_a
+track: calibration
 title_en: Plinko / Galton Board
 outcome_question: Which label in ['bin_1', 'bin_2', 'bin_3', 'bin_4', 'bin_5'] is
   visible as the first decisive post-action result?

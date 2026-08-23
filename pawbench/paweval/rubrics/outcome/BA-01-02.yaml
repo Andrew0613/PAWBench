@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BA-01-02
-track: track_b
+track: coverage
 title_en: Cat Touch Reaction Pose Variant
 outcome_question: Which label in ['cat_accepts_touch_or_leans_in', 'cat_remains_still_near_hand',
   'cat_withdraws_but_stays_in_area', 'cat_leaves_interaction_area', 'cat_defensive_posture_without_contact',

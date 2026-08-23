@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BA-07
-track: track_b
+track: coverage
 title_en: Leashed Dog Bowl Reaction
 outcome_question: Which label in ['dog_continues_eating_at_bowl', 'dog_pauses_or_lifts_head_near_bowl',
   'dog_resists_taut_leash_stays_near_bowl', 'dog_steps_back_from_bowl', 'bowl_shifts_without_food_spill',

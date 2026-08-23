@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A-13
-track: track_a
+track: calibration
 title_en: Blind draw from transparent box
 outcome_question: Which label in ['red', 'blue'] is visible as the first decisive
   post-action result?

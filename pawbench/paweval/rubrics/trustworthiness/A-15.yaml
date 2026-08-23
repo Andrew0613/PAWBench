@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-15
-track: track_a
+track: calibration
 title_en: Triangle roll composition induction
 scene_grounding:
 - 'Initial state must match: An off-center triangular split apparatus sits near the

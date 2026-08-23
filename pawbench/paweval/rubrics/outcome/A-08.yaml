@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A-08
-track: track_a
+track: calibration
 title_en: Isosceles triangle ball roll
 outcome_question: Which label in ['left', 'right'] is visible as the first decisive
   post-action result?

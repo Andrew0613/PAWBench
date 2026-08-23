@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-05
-track: track_a
+track: calibration
 title_en: One-peg Galton board
 scene_grounding:
 - 'Initial state must match: One ball is at the centered release point above a one-peg

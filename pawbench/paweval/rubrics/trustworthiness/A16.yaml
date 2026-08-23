@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A16
-track: track_a
+track: calibration
 title_en: Roulette Ball Settling
 scene_grounding:
 - 'Initial state must match: One ball is positioned at the entrance of a roulette-like

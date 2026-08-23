@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BA-06
-track: track_b
+track: coverage
 title_en: Cat Tabletop Object Contact
 outcome_question: Which label in ['cat_does_not_enter_tabletop_area', 'cat_enters_tabletop_area_without_object_contact',
   'cat_touches_object_without_displacing', 'cat_displaces_non_cup_object', 'cat_displaces_cup_without_spill',

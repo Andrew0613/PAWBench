@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BC-03-I1
-track: track_b
+track: coverage
 title_en: Cued Seven-Pin Bowling Roll
 scene_grounding:
 - 'Initial state must match: A bowling setup matching `BC-03`, with a visible text cue on the bowling

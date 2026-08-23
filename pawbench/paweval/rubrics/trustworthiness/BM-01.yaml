@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BM-01
-track: track_b
+track: coverage
 title_en: Loose Yarn Pull on Knitted Fabric
 scene_grounding:
 - 'Initial state must match: A hand pinches a visible loose yarn loop or end on a

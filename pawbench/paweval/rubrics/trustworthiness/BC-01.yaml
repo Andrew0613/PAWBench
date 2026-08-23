@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BC-01
-track: track_b
+track: coverage
 title_en: Ball Toss Into Cup
 scene_grounding:
 - 'Initial state must match: A hand holds one ball at the visible pre-toss position

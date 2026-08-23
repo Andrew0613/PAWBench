@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BC-06
-track: track_b
+track: coverage
 title_en: Dart Throw at Board
 outcome_question: Which dart throw outcome in ['bullseye', 'outer_bull', 'inner_single_hit', 'triple_ring_hit',
   'outer_single_hit', 'double_ring_hit', 'board_bounce_out', 'off_board_miss'] is visible as the first

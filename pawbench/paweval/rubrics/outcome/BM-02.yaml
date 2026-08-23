@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BM-02
-track: track_b
+track: coverage
 title_en: Chocolate Bar Bend and Break
 outcome_question: Which label in ['no_visible_break', 'single_clean_break', 'partial_crack_not_separated',
   'multiple_piece_break', 'crumbs_or_small_fragment_break'] is visible as the first

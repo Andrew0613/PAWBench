@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BC-03
-track: track_b
+track: coverage
 title_en: Seven-Pin Bowling Roll
 scene_grounding:
 - 'Initial state must match: A bowling ball is held at the lane with seven standing pins visible ahead.'

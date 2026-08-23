@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A25
-track: track_a
+track: calibration
 title_en: Left-Leaning Pencil Fall
 scene_grounding:
 - 'Initial state must match: One pencil is already tilted slightly to the left on

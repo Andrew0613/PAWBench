@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BA-06
-track: track_b
+track: coverage
 title_en: Cat Tabletop Object Contact
 scene_grounding:
 - 'Initial state must match: A cat is poised near the edge of a table with a cup and

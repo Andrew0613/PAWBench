@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A18
-track: track_a
+track: calibration
 title_en: Spinning Top Settling
 outcome_question: Which colored sector contains the spinning top's contact point or
   center in the first committed readable post-action sector relation, using the color names

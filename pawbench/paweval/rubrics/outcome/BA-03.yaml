@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BA-03
-track: track_b
+track: coverage
 title_en: Dog Route Choice Toward Toy
 outcome_question: Which route/attempt label in ['goes_around_left', 'goes_around_right',
   'jumps_over_middle', 'crawls_or_ducks_under_middle', 'does_not_attempt'] is visible

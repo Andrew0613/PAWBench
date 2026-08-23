@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-03
-track: track_a
+track: calibration
 title_en: Two-color equal-sector spinner
 scene_grounding:
 - 'Initial state must match: Two equal colored sectors are visible on a wheel, with

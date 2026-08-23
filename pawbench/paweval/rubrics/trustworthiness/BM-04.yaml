@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BM-04
-track: track_b
+track: coverage
 title_en: Tape Peel from Cardboard
 scene_grounding:
 - 'Initial state must match: A strip of tape is partly attached to cardboard and held

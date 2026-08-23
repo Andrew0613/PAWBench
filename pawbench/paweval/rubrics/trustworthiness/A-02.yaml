@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-02
-track: track_a
+track: calibration
 title_en: Die face toss
 scene_grounding:
 - 'Initial state must match: One die is held in the hand above the tabletop.'

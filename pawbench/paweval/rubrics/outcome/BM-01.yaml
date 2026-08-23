@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BM-01
-track: track_b
+track: coverage
 title_en: Loose Yarn Pull on Knitted Fabric
 outcome_question: Which label in ['thread_pulls_free_cleanly', 'small_unravel', 'large_unravel_or_ladder',
   'thread_snaps', 'thread_stays_attached_no_visible_change'] is visible as the first

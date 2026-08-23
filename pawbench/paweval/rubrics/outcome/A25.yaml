@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A25
-track: track_a
+track: calibration
 title_en: Left-Leaning Pencil Fall
 outcome_question: Which label in ['falls_left', 'falls_right'] is visible as the first
   decisive post-action result?

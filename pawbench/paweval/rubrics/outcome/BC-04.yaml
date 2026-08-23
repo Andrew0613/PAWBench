@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BC-04
-track: track_b
+track: coverage
 title_en: Soccer Shot on Guarded Goal
 outcome_question: Which soccer-shot outcome in ['clean_goal', 'keeper_deflected_goal', 'frame_deflected_goal',
   'goalkeeper_prevents_goal', 'post_out', 'crossbar_out', 'miss_left', 'miss_right', 'miss_high', 'shot_stops_short']

@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BA-01
-track: track_b
+track: coverage
 title_en: Cat Reaction to Gentle Hand Touch
 scene_grounding:
 - 'Initial state must match: A hand is near a resting cat on a sofa.'

@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BM-02
-track: track_b
+track: coverage
 title_en: Chocolate Bar Bend and Break
 scene_grounding:
 - 'Initial state must match: Two hands hold a chocolate bar in a bending/breaking

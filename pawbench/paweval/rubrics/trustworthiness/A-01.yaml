@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-01
-track: track_a
+track: calibration
 title_en: Coin flip
 scene_grounding:
 - 'Initial state must match: One coin is held at the release point above the tabletop.'

@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BC-02
-track: track_b
+track: coverage
 title_en: Basketball Shot at Hoop
 outcome_question: Which basketball shot outcome in ['swish', 'backboard_then_in', 'rim_then_in', 'rim_miss_no_score',
   'backboard_miss_no_score', 'left_miss_no_contact', 'right_miss_no_contact', 'short_airball_no_contact',

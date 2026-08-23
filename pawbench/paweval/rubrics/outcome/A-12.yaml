@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A-12
-track: track_a
+track: calibration
 title_en: Y-track with visual cue
 outcome_question: Which label in ['left_path', 'right_path'] is visible as the first
   decisive post-action result?

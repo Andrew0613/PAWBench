@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BA-02
-track: track_b
+track: coverage
 title_en: Dog Reaction to Approaching Stranger
 scene_grounding:
 - 'Initial state must match: A stranger approaches a standing dog on an outdoor path.'

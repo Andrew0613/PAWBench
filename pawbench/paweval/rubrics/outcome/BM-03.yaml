@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BM-03
-track: track_b
+track: coverage
 title_en: Fried Egg Flip on Spatula
 outcome_question: Which egg-flip outcome in ['lands_yolk_up_intact', 'lands_yolk_down_intact', 'folds_without_tearing',
   'white_tears_yolk_intact', 'yolk_ruptures', 'spatula_contact_no_flip'] is visible as the first decisive

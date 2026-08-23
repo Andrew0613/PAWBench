@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A-04
-track: track_a
+track: calibration
 title_en: Two-color unequal-sector spinner
 outcome_question: Which colored sector of the wheel is under the fixed pointer in
   the latest readable post-action terminal pointer/sector relation, using the color

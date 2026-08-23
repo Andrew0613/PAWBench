@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BC-09
-track: track_b
+track: coverage
 title_en: Pinball Board Ball Release
 outcome_question: Which label in ['left_bin', 'middle_bin', 'right_bin', 'stuck_on_board']
   is visible as the first decisive post-action result?

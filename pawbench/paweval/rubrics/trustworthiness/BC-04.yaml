@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BC-04
-track: track_b
+track: coverage
 title_en: Soccer Shot on Guarded Goal
 scene_grounding:
 - 'Initial state must match: A soccer player is about to kick a ball toward a guarded goal.'

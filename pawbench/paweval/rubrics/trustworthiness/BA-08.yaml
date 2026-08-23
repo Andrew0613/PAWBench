@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BA-08
-track: track_b
+track: coverage
 title_en: Bird Reaction to Offered Food
 scene_grounding:
 - 'Initial state must match: A bird stands on a cafe table while the feeding hand

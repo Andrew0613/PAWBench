@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A21
-track: track_a
+track: calibration
 title_en: Two-Dice Sum
 outcome_question: Which sum_N label is determined by the two visible top faces on
   the dice once a first decisive post-action readout is visible?

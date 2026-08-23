@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A-10
-track: track_a
+track: calibration
 title_en: Double coin flip
 outcome_question: Which label in ['0_heads', '1_head', '2_heads'] is visible across
   the two coins in the first decisive post-toss readout window?

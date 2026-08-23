@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A23
-track: track_a
+track: calibration
 title_en: Coin Toss With Back-Face Initial State
 outcome_question: Which label in ['heads', 'tails'] is visible on the coin in the
   first decisive post-toss readout window?

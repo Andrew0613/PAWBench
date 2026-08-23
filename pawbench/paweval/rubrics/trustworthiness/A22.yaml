@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A22
-track: track_a
+track: calibration
 title_en: Plinko / Galton Board
 scene_grounding:
 - 'Initial state must match: A symmetric four-row Galton board has one centered top

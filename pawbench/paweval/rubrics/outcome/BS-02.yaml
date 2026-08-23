@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BS-02
-track: track_b
+track: coverage
 title_en: Red-Marked Block Tower Removal
 outcome_question: Which block-tower outcome in ['tower_remains_standing_after_removal', 'tower_remains_standing_but_displaced',
   'top_section_collapse', 'side_section_collapse', 'full_collapse'] is visible as the first decisive result

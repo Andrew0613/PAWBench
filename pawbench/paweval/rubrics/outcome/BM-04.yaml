@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BM-04
-track: track_b
+track: coverage
 title_en: Tape Peel from Cardboard
 outcome_question: Which label in ['clean_full_peel', 'partial_peel_tape_still_attached',
   'tape_tears', 'cardboard_surface_tears', 'tape_curls_or_reattaches_without_full_removal']

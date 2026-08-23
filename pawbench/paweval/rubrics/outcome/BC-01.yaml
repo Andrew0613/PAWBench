@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BC-01
-track: track_b
+track: coverage
 title_en: Ball Toss Into Cup
 outcome_question: Which label in ['clean_in_cup', 'contact_then_in_cup', 'cup_contact_then_out',
   'near_miss_no_cup_contact', 'clear_miss'] is visible as the first decisive post-action

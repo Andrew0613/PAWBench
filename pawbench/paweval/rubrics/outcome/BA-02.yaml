@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BA-02
-track: track_b
+track: coverage
 title_en: Dog Reaction to Approaching Stranger
 outcome_question: Which label in ['dog_approaches_person', 'dog_holds_position_facing_person',
   'dog_turns_away_without_retreating', 'dog_retreats_or_avoids_person',

@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A17
-track: track_a
+track: calibration
 title_en: Ridge-Instability Ball Release
 outcome_question: Which label in ['left_basin', 'right_basin'] is visible as the first
   decisive post-action result?

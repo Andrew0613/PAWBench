@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BA-01-02
-track: track_b
+track: coverage
 title_en: Cat Touch Reaction Pose Variant
 scene_grounding:
 - 'Initial state must match: A cat-touch setup matching `BA-01`, with the cat in a

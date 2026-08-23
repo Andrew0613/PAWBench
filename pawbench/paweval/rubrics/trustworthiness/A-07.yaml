@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-07
-track: track_a
+track: calibration
 title_en: Y-track branch
 scene_grounding:
 - 'Initial state must match: One small ball is at the visible release point of a Y-shaped

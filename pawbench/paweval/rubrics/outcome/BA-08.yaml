@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BA-08
-track: track_b
+track: coverage
 title_en: Bird Reaction to Offered Food
 outcome_question: Which label in ['bird_takes_food_from_hand', 'bird_flies_off_or_leaves_table',
   'bird_moves_away_but_stays_on_table', 'bird_displaces_food_without_taking',

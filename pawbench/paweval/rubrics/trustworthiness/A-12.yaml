@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-12
-track: track_a
+track: calibration
 title_en: Y-track with visual cue
 scene_grounding:
 - 'Initial state must match: A Y-shaped split apparatus is visible with a fixed visual

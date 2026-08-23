@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-11
-track: track_a
+track: calibration
 title_en: Offset Galton board
 scene_grounding:
 - 'Initial state must match: One ball is at an offset release point above a Galton-style

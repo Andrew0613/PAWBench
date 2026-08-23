@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-09
-track: track_a
+track: calibration
 title_en: Vertical pencil fall
 scene_grounding:
 - 'Initial state must match: One pencil is balanced perfectly upright on the tabletop.'

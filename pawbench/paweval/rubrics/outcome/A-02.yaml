@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A-02
-track: track_a
+track: calibration
 title_en: Die face toss
 outcome_question: Which top face (face_1..face_6) is visible on the die once the post-action
   motion has decisively settled?

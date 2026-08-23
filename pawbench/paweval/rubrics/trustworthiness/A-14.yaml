@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-14
-track: track_a
+track: calibration
 title_en: Blind draw with visual distractor
 scene_grounding:
 - 'Initial state must match: A blind draw setup like A-13 is visible, with additional

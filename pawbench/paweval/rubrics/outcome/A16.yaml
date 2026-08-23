@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A16
-track: track_a
+track: calibration
 title_en: Roulette Ball Settling
 outcome_question: Which color group contains the released ball when it has decisively
   settled, using the labels ['red_group', 'blue_group', 'green_group', 'yellow_group']?

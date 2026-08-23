@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A20
-track: track_a
+track: calibration
 title_en: Text-Cued Galton Board
 scene_grounding:
 - 'Initial state must match: A two-peg Galton board is visible with a fixed text cue/sign

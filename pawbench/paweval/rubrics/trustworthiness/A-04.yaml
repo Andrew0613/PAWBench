@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A-04
-track: track_a
+track: calibration
 title_en: Two-color unequal-sector spinner
 scene_grounding:
 - 'Initial state must match: A red smaller sector and a blue larger sector are visible

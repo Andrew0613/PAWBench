@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A18
-track: track_a
+track: calibration
 title_en: Spinning Top Settling
 scene_grounding:
 - 'Initial state must match: A spinning top is positioned in a circular tray divided

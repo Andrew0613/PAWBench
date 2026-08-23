@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A20
-track: track_a
+track: calibration
 title_en: Text-Cued Galton Board
 outcome_question: Which label in ['left', 'middle', 'right'] is visible as the first
   decisive post-action result?

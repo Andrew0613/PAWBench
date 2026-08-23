@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: A24
-track: track_a
+track: calibration
 title_en: Colored Ball Dispenser With Text Cue
 outcome_question: Which label in ['red', 'green', 'blue', 'yellow'] is visible as
   the first decisive post-action result?

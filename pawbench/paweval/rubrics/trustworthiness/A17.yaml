@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A17
-track: track_a
+track: calibration
 title_en: Ridge-Instability Ball Release
 scene_grounding:
 - 'Initial state must match: One metal ball is stationary at the centered top release

@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BA-07
-track: track_b
+track: coverage
 title_en: Leashed Dog Bowl Reaction
 scene_grounding:
 - 'Initial state must match: A leashed dog is eating from a bowl while a person holds

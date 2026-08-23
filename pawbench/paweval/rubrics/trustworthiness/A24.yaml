@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: A24
-track: track_a
+track: calibration
 title_en: Colored Ball Dispenser With Text Cue
 scene_grounding:
 - 'Initial state must match: A transparent dispenser contains exactly two red, two

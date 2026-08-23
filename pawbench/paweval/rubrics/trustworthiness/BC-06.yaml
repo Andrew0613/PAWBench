@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: trustworthiness
 scene_id: BC-06
-track: track_b
+track: coverage
 title_en: Dart Throw at Board
 scene_grounding:
 - 'Initial state must match: A hand holds one dart in the visible throwing pose aimed at a wall-mounted

@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BS-03
-track: track_b
+track: coverage
 title_en: Tablecloth Pull Under Objects
 outcome_question: Which tablecloth-pull outcome in ['objects_remain_in_place', 'objects_shift_but_upright',
   'objects_scatter_on_table', 'one_object_falls_on_table', 'multiple_objects_fall_on_table', 'one_object_leaves_table',

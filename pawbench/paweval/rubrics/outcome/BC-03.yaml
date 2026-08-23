@@ -1,7 +1,7 @@
 schema_version: paweval.rubric/v1
 axis: outcome
 scene_id: BC-03
-track: track_b
+track: coverage
 title_en: Seven-Pin Bowling Roll
 outcome_question: Which seven-pin bowling outcome in ['all_7_pins_down', 'six_pins_down', 'five_pins_down',
   'four_pins_down', 'three_pins_down', 'two_pins_down', 'one_pin_down', 'zero_pins_down_after_contact',
