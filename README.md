@@ -36,7 +36,7 @@ the released reference contract.
 
 | Benchmark component | Released contract |
 | --- | --- |
-| Scenes | 50 physical scenes: 25 Calibration and 25 Coverage |
+| Scenes | 50 physical scenes: 25 PAW-Calibration and 25 PAW-Coverage |
 | Rollouts | 50 generated videos per scene |
 | Calibration target | Reference outcome distribution |
 | Coverage target | Set of supported outcome labels |
@@ -49,8 +49,8 @@ PAWBench has two complementary tracks.
 
 | Track | Question | Official metric |
 | --- | --- | --- |
-| **Calibration** | Does the model reproduce how frequently each outcome occurs? | Total variation distance (TVD); lower is better. |
-| **Coverage** | Does the model produce every outcome the scene supports? | Support coverage; higher is better. |
+| **PAW-Calibration** | Does the model reproduce how frequently each outcome occurs? | Total variation distance (TVD); lower is better. |
+| **PAW-Coverage** | Does the model produce every outcome the scene supports? | Support coverage; higher is better. |
 
 The tracks stay separate. PAWBench intentionally does **not** collapse them
 into a single leaderboard score: matching a distribution and discovering its
@@ -95,7 +95,15 @@ contact a provider during installation.
 ## Benchmark data
 
 PAWBench expects an already-materialized benchmark package. The evaluator does
-not prescribe where you store it or download it on your behalf.
+not download it on your behalf; fetch it once with the Hugging Face CLI and
+point the evaluator at the result.
+
+```bash
+pip install -U "huggingface_hub[cli]"
+hf download Andrew613/PAWBench --repo-type dataset --local-dir PAWBench
+```
+
+The package layout is:
 
 ```text
 PAWBench/
@@ -106,11 +114,12 @@ PAWBench/
 ```
 
 The released scene table defines 50 scenes. Each row contains a `scene_id`,
-the `split` (`calibration` or `coverage`), a `source_image_path`, outcome
+the `split` (`calibration` or `coverage` — the machine-readable form of the
+PAW-Calibration / PAW-Coverage track names), a `source_image_path`, outcome
 labels, and either:
 
-- `reference_distribution` for a Calibration scene; or
-- the supported `outcome_labels` for a Coverage scene.
+- `reference_distribution` for a PAW-Calibration scene; or
+- the supported `outcome_labels` for a PAW-Coverage scene.
 
 The benchmark package is hosted at
 [`Andrew613/PAWBench`](https://huggingface.co/datasets/Andrew613/PAWBench).
@@ -118,6 +127,24 @@ It is a clean distribution of the PAWBench V2 input contract used for the
 reported evaluations. Materialize it locally before evaluation.
 
 ## Quick start: evaluate generated videos
+
+### Generating rollouts
+
+This repository ships the evaluator only. It contains no video-generation
+code and calls no generation APIs: PAWBench evaluates whatever rollouts you
+bring. To evaluate a system:
+
+1. Materialize the benchmark package (see [Benchmark data](#benchmark-data)).
+2. For each of the 50 scenes, take the source image and the action prompt from
+   the package and generate 50 independent videos with your own access to the
+   system under test.
+3. Lay the rollouts out as `<results>/<scene_id>/r000.mp4` … `r049.mp4`.
+
+The paper's reported numbers used the video systems and default inference
+configurations described there; reproducing a specific table row requires
+equivalent access to that system.
+
+### Calling evaluate()
 
 Provide one item per generated video. Each item identifies the scene and its
 repeat index, then points to the local MP4. `evaluate()` derives the complete
@@ -127,18 +154,20 @@ smaller denominator from the videos that happen to be present.
 ```python
 from pathlib import Path
 
-from pawbench import evaluate
+benchmark_dir = Path("~/data/PAWBench").expanduser()
+results_dir = Path("~/results/my-model").expanduser()
 
 result = evaluate(
-    Path("/data/PAWBench"),
+    benchmark_dir,
     [
         {
             "sample_id": "my-model::A-01::r000",
             "scene_id": "A-01",
             "repeat_index": 0,
-            "video_path": "/results/A-01/r000.mp4",
+            "video_path": str(results_dir / "A-01" / "r000.mp4"),
         },
-        # Add one row for every scene and repeat in the released grid.
+        # Add one row for every scene and repeat in the released grid,
+        # or let examples/quickstart.py discover them from results_dir.
     ],
     model_or_lane="my-model",
     vlm={
@@ -158,7 +187,10 @@ Set the provider key in the named environment variable before running:
 export YOUR_VLM_API_KEY="..."
 ```
 
-The full editable example is in [`examples/quickstart.py`](examples/quickstart.py).
+The runnable command-line version of this workflow is
+[`examples/quickstart.py`](examples/quickstart.py): all paths and VLM settings
+come from flags or `PAWBENCH_*` environment variables, and it discovers the
+`<results>/<scene_id>/r###.mp4` layout automatically.
 
 ## Metric-only use
 
@@ -171,13 +203,13 @@ from pawbench import compute_metrics
 metrics = compute_metrics(rows, scene_policy)
 ```
 
-For Calibration, PAWBench reports
+For PAW-Calibration, PAWBench reports
 
 ```text
 TVD (%) = 100 × ½ × Σ |observed outcome frequency − reference probability|
 ```
 
-For Coverage, it reports
+For PAW-Coverage, it reports
 
 ```text
 Coverage (%) = 100 × |observed labels ∩ supported labels| / |supported labels|
