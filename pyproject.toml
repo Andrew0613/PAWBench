@@ -26,6 +26,13 @@ dependencies = ["PyYAML>=6.0"]
 
 [project.optional-dependencies]
 eval = ["opencv-python-headless>=4.9"]
+generate = [
+  "accelerate>=1.0",
+  "diffusers>=0.35",
+  "imageio[ffmpeg]>=2.34",
+  "torch>=2.4",
+  "transformers>=4.45",
+]
 dev = ["pytest>=8", "ruff>=0.5"]
 
 [project.urls]

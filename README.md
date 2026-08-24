@@ -46,6 +46,35 @@ It ships 100 reviewable rubrics (one outcome rubric and one trustworthiness
 rubric per scene). The two metrics remain separate; PAWBench does not turn
 them into a single score.
 
+## Visual examples
+
+Each strip below is one generated rollout. PAWBench repeats the same source
+image and action 50 times, reads one outcome from every rollout, and evaluates
+the resulting distribution rather than judging a single video in isolation.
+These two published HappyHorse rollouts illustrate the readout protocol; neither
+single rollout is a model-level result.
+
+### PAW-Calibration: Coin flip (`A-01`)
+
+<p align="center">
+  <img src="assets/examples/a01-coin-flip.png" alt="A generated coin-flip rollout beginning with a coin held over a table and ending with the coin lying heads-up." width="900">
+</p>
+
+**Action:** flick the coin once. This rollout is read as `heads`. Across 50
+rollouts, the Head/Tail frequencies are compared with the scene's reference
+distribution using TVD.
+
+### PAW-Coverage: Ball Toss Into Cup (`BC-01`)
+
+<p align="center">
+  <img src="assets/examples/bc01-ball-toss-cup.png" alt="A generated ball-toss rollout beginning with a ball held near a cup and ending with the ball inside the cup." width="900">
+</p>
+
+**Action:** toss the ball once toward the cup. This rollout is read as
+`clean_in_cup`. Across repeated rollouts, Coverage asks how many supported
+outcomes the model recovers, including in-cup, contact-then-out, near-miss, and
+clear-miss outcomes.
+
 ## Initial results (pre-release)
 
 These are the current fixed-K=50, GT-guided reference runs under the same
@@ -105,9 +134,40 @@ my-model-rollouts/
 └── ...
 ```
 
-PAWBench does not run the generator for you; it evaluates the videos you
-already generated. Configure the evaluator with environment variables, then
-run the working example:
+The `evaluate()` API does not invoke a generator; it evaluates videos that are
+already present on disk. You can generate them with your own system or use the
+optional Diffusers example below.
+
+#### Optional: generate rollouts with Diffusers
+
+If your image-to-video model is available through Diffusers, the included
+generation example can create the required directory layout directly. The
+model ID is explicit and replaceable; the example does not maintain a model
+registry.
+
+```bash
+pip install -e ".[generate]"
+
+# Validate a one-scene, one-rollout smoke plan without loading the model.
+python examples/generate_diffusers.py \
+  --benchmark "$PAWBENCH_DATA_DIR" \
+  --output "$PWD/my-model-rollouts" \
+  --model-id Wan-AI/Wan2.1-I2V-14B-480P-Diffusers \
+  --scene A-01 \
+  --num-rollouts 1 \
+  --dry-run
+```
+
+Remove `--dry-run` to generate the video. Different compatible Diffusers
+image-to-video checkpoints can be selected with `--model-id`. Model downloads
+and GPU requirements depend on the selected checkpoint. A complete PAWBench
+run uses `--all-scenes --num-rollouts 50`, producing 2,500 videos; start with
+the smoke example before committing that compute.
+
+#### Evaluate generated or existing rollouts
+
+The evaluator only needs the completed rollout directory, regardless of how
+the videos were generated:
 
 ```bash
 export PAWBENCH_RESULTS_DIR="$PWD/my-model-rollouts"
@@ -123,8 +183,9 @@ python examples/quickstart.py
 
 [`examples/quickstart.py`](examples/quickstart.py) discovers the rollout
 layout above and calls `evaluate()` with your paths, model name, and VLM
-configuration. It is deliberately a small Python example, not a second CLI or
-model registry.
+configuration. [`examples/generate_diffusers.py`](examples/generate_diffusers.py)
+is the matching optional generator example. Both remain editable examples
+rather than a submission system or model registry.
 
 ## Python API
 
@@ -152,7 +213,7 @@ pawbench/
 ├── evaluation.py           # complete local evaluation journey
 ├── metrics.py              # official deterministic metrics
 └── paweval/                # rubrics, evidence preparation, VLM judgment
-examples/quickstart.py      # runnable example
+examples/                   # Diffusers generation and evaluation examples
 assets/                     # README figures
 tests/                      # public-contract and evaluator checks
 ```

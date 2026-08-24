@@ -6,5 +6,8 @@ downloaded benchmark package and one model's `<scene_id>/r000.mp4` …
 run it from the repository root. Its exact setup commands are in the
 [README](../README.md#3-evaluate-your-videos).
 
-The repository intentionally does not ship a generator, a submission protocol,
-or a model registry.
+[`generate_diffusers.py`](generate_diffusers.py) is an optional, editable
+generation example. Give it any compatible Diffusers image-to-video model ID;
+it reads the benchmark source images and prompts and writes the rollout layout
+consumed by `quickstart.py`. It is a local example, not a model registry or
+submission system.
