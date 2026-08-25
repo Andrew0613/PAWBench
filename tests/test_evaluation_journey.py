@@ -7,6 +7,7 @@ import pytest
 
 import pawbench.evaluation as evaluation
 import pawbench.metrics as metrics
+from pawbench.paweval.evidence.extraction import safe_name
 from pawbench.paweval.evidence.frames import EvidenceFrame
 from pawbench.paweval.judge.responses import JudgeResponse, parse_judge_response
 from pawbench.paweval.rubrics.loader import load_rubric
@@ -70,7 +71,7 @@ def videos(root: Path) -> list[dict]:
 
 
 def fake_extract(*, sample_id: str, output_dir: Path, **_: object) -> tuple[EvidenceFrame, ...]:
-    frame = output_dir / f"{sample_id.replace(':', '_')}.jpg"
+    frame = output_dir / f"{safe_name(sample_id)}.jpg"
     frame.write_bytes(b"frame")
     return (
         EvidenceFrame(f"{sample_id}:initial", "initial", frame.as_uri(), 0.0),

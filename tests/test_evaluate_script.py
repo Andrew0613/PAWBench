@@ -56,6 +56,15 @@ def test_main_passes_a_persistent_output_directory(monkeypatch, tmp_path: Path) 
     )
 
     assert status == 0
+    assert captured["args"][0] == benchmark
+    assert captured["args"][1] == [
+        {
+            "sample_id": "model-x::coin-flip::r000",
+            "scene_id": "coin-flip",
+            "repeat_index": 0,
+            "video_path": str((scene / "r000.mp4").resolve()),
+        }
+    ]
     assert captured["kwargs"]["output_dir"] == output
     assert captured["kwargs"]["model_or_lane"] == "model-x"
     assert captured["kwargs"]["vlm"] == {
