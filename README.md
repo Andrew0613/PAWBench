@@ -28,11 +28,10 @@ valid state. PAWBench therefore asks whether a video generator reproduces a
 *distribution* of physical outcomes across repeated rollouts, not whether it
 can produce one convincing video.
 
-![PAWBench overview: repeated physical rollouts are labeled and compared with the expected outcome distribution.](assets/paweval-overview.png)
+![One plausible rollout can look correct even when repeated rollouts reveal a probabilistically unaligned world.](assets/paper/figure-1.png)
 
-For each fixed source image and action, generate 50 videos. PAWEval reads each
-rollout with a scene-specific rubric, then the official metrics aggregate the
-resulting outcome labels.
+PAWBench fixes the source image and action, samples 50 videos, and evaluates the
+resulting distribution of physical outcomes.
 
 | Track | Question | Metric |
 | --- | --- | --- |
@@ -43,11 +42,6 @@ The benchmark contains 50 scenes: 25 PAW-Calibration and 25 PAW-Coverage.
 It ships 100 reviewable rubrics (one outcome rubric and one trustworthiness
 rubric per scene). The two metrics remain separate; PAWBench does not turn
 them into a single score.
-
-The outcome rubric determines the terminal label used by TVD and Coverage. The
-trustworthiness rubric is an auxiliary diagnostic: it records action,
-continuity, and physical-process failures but does not change the terminal
-label, metric denominator, or score.
 
 ## Visual examples
 
@@ -74,28 +68,24 @@ distribution using TVD.
 outcomes the model recovers, including in-cup, contact-then-out, near-miss, and
 clear-miss outcomes.
 
+## How PAWEval works
+
+![PAWEval maps repeated rollouts to physical outcomes and compares their empirical distribution with the reference.](assets/paweval-overview.png)
+
+PAWEval reads every generated video with the scene's outcome rubric, assigns a
+terminal outcome, and aggregates the 50 labels into the distribution scored by
+TVD or Coverage. A separate trustworthiness rubric records action, continuity,
+and physical-process failures without changing the terminal label or score.
+
 ## Initial results (pre-release)
 
-These are the current fixed-K=50, GT-guided reference runs under the same
-current rubric setting. They are useful reference points, **not** a public
-leaderboard: they do not compare base/no-prompt systems, and will be superseded
-by the paper's released table.
-
-| Model | PAW-Calibration TVD (%) ↓ | PAW-Coverage (%) ↑ |
-| --- | ---: | ---: |
-| Wan2.2 | 15.3 | 76.2 |
-| MiniMax H3 | 10.8 | 82.9 |
-| Cosmos 3 Super I2V | 12.8 | 87.3 |
-| LTX-2.5 | 18.0 | 73.9 |
-
-The machine-readable aggregate snapshot, including scene pass rates, evaluator
-model, protocol, and pre-release evidence boundary, is tracked in
-[`results/pre_release_oracle_pe.json`](results/pre_release_oracle_pe.json).
+![Table 1: Main PAWBench results across PAW-Calibration and PAW-Coverage.](assets/paper/table-1.png)
 
 ## Run PAWBench
 
-The shortest workflow is: install the evaluator, download the data once,
-generate your videos, then run the example.
+The shortest workflow is: install the dependencies, download the data once,
+generate your videos, then run one evaluation script. PAWBench does not need to
+be installed as a Python package.
 
 ### 1. Install
 
@@ -105,7 +95,7 @@ cd PAWBench
 
 python -m venv .venv
 source .venv/bin/activate
-pip install -e ".[eval]"
+pip install -r requirements.txt
 ```
 
 ### 2. Download the benchmark data
@@ -119,8 +109,7 @@ hf download Andrew613/PAWBench --repo-type dataset --local-dir "$PAWBENCH_DATA_D
 ```
 
 Afterward, the directory should contain `manifest.json`, `scenes.jsonl`,
-`source_images/`, and `prompts/`. Keep this path: the example below reads it
-through `PAWBENCH_DATA_DIR`.
+`source_images/`, and `prompts/`. Keep this path for the commands below.
 
 ### 3. Evaluate your videos
 
@@ -135,9 +124,8 @@ my-model-rollouts/
 └── ...
 ```
 
-The `evaluate()` API does not invoke a generator; it evaluates videos that are
-already present on disk. You can generate them with your own system or use the
-optional Diffusers example below.
+The evaluation script reads videos that are already present on disk. You can
+generate them with your own system or use the optional Diffusers example below.
 
 #### Optional: generate rollouts with Diffusers
 
@@ -147,7 +135,7 @@ model ID is explicit and replaceable; the example does not maintain a model
 registry.
 
 ```bash
-pip install -e ".[generate]"
+pip install -r requirements-generate.txt
 
 # Generate the official 50-scene x 50-rollout grid.
 python examples/generate_diffusers.py \
@@ -168,58 +156,32 @@ The evaluator only needs the completed rollout directory, regardless of how
 the videos were generated:
 
 ```bash
-export PAWBENCH_RESULTS_DIR="$PWD/my-model-rollouts"
-export PAWBENCH_OUTPUT_DIR="$PWD/pawbench-evaluations/my-model"
-export PAWBENCH_MODEL="my-model"
-
-# The OpenAI-compatible VLM used by PAWEval.
-export PAWBENCH_VLM_BASE_URL="https://your-vlm-provider.example/v1"
-export PAWBENCH_VLM_MODEL="your-vlm-model"
 export PAWBENCH_VLM_API_KEY="..."
 
-python examples/quickstart.py
+python evaluate.py \
+  --benchmark "$PWD/data/PAWBench" \
+  --videos "$PWD/my-model-rollouts" \
+  --output "$PWD/pawbench-evaluations/my-model" \
+  --model my-model \
+  --vlm-base-url "https://your-vlm-provider.example/v1" \
+  --vlm-model "your-vlm-model"
 ```
 
-[`examples/quickstart.py`](examples/quickstart.py) discovers the rollout
-layout above and calls `evaluate()` with your paths, model name, and VLM
-configuration. It writes `run.json`, `checkpoint.jsonl`, `rows.jsonl`, and
-`metrics.json` under `PAWBENCH_OUTPUT_DIR`. Re-running the same benchmark,
-model, and VLM configuration resumes completed rollout slots; changed video
-files are judged again. [`examples/generate_diffusers.py`](examples/generate_diffusers.py)
-is the matching optional generator example. Both remain editable examples
-rather than a submission system or model registry.
-
-## Python API
-
-The public package exposes exactly two functions:
-
-```python
-from pawbench import compute_metrics, evaluate
-```
-
-`evaluate(benchmark_path, videos, *, model_or_lane, vlm, output_dir=None)` runs
-the complete local evaluation journey. Pass `output_dir` for durable artifacts
-and automatic resume. `compute_metrics(rows, scene_policy)` calculates the
-official metrics from existing judgment rows without decoding media or calling
-a VLM.
-
-`pawbench/paweval/` remains fully visible for review: it loads the two rubrics,
-samples video frames, renders the judgment instructions, calls an
-OpenAI-compatible VLM, and parses its structured response. It is an
-implementation detail rather than a second public judge SDK.
+The script discovers the rollout layout above and writes `run.json`,
+`checkpoint.jsonl`, `rows.jsonl`, and `metrics.json` under `--output`.
+Re-running the same benchmark, model, and VLM configuration resumes completed
+rollout slots; changed video files are judged again.
 
 ## Repository layout
 
 ```text
-pawbench/
-├── __init__.py             # public API: evaluate, compute_metrics
-├── evaluation.py           # complete local evaluation journey
-├── metrics.py              # official deterministic metrics
+evaluate.py                 # run PAWBench on an existing rollout directory
+pawbench/                   # evaluator implementation and official metrics
 └── paweval/                # rubrics, evidence preparation, VLM judgment
-examples/                   # Diffusers generation and evaluation examples
-assets/                     # README figures
-results/                    # machine-readable pre-release aggregate snapshot
-tests/                      # public-contract and evaluator checks
+examples/                   # optional Diffusers generation example
+assets/                     # README and paper figures
+requirements*.txt           # evaluation, generation, and development dependencies
+tests/                      # evaluator and script checks
 ```
 
 ## Citation

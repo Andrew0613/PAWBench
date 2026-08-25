@@ -1,4 +1,4 @@
-"""PIC-112: the unreleased package exposes only its future public journey."""
+"""Checks for the repository's direct, script-based public workflow."""
 
 from __future__ import annotations
 
@@ -9,13 +9,21 @@ from pathlib import Path
 
 import pytest
 
-import pawbench
+from pawbench.evaluation import evaluate
 
 
-def test_public_package_exports_only_the_two_journey_entry_points() -> None:
-    assert pawbench.__all__ == ["compute_metrics", "evaluate"]
-    assert callable(pawbench.evaluate)
-    assert callable(pawbench.compute_metrics)
+def test_repository_uses_a_direct_script_instead_of_an_installable_package() -> None:
+    root = Path(__file__).resolve().parents[1]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
+
+    assert (root / "evaluate.py").is_file()
+    assert "pip install -r requirements.txt" in readme
+    assert "python evaluate.py" in readme
+    assert "pip install -e" not in readme
+    assert "## Python API" not in readme
+    assert "[project]" not in pyproject
+    assert "[build-system]" not in pyproject
 
 
 @pytest.mark.parametrize("module", ["benchmark", "submission", "results"])
@@ -23,8 +31,8 @@ def test_invented_public_protocol_modules_are_not_shipped(module: str) -> None:
     assert importlib.util.find_spec(f"pawbench.{module}") is None
 
 
-def test_evaluation_exposes_the_complete_public_journey() -> None:
-    assert tuple(inspect.signature(pawbench.evaluate).parameters) == (
+def test_internal_evaluation_has_the_complete_script_journey() -> None:
+    assert tuple(inspect.signature(evaluate).parameters) == (
         "benchmark_path",
         "videos",
         "model_or_lane",
@@ -33,13 +41,16 @@ def test_evaluation_exposes_the_complete_public_journey() -> None:
     )
 
 
-def test_package_has_no_download_surface_and_media_is_opt_in() -> None:
+def test_requirements_keep_evaluation_and_generation_dependencies_separate() -> None:
     root = Path(__file__).resolve().parents[1]
-    pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
+    evaluation = (root / "requirements.txt").read_text(encoding="utf-8")
+    generation = (root / "requirements-generate.txt").read_text(encoding="utf-8")
 
-    assert 'dependencies = ["PyYAML>=6.0"]' in pyproject
-    assert "huggingface-hub" not in pyproject
-    assert 'eval = ["opencv-python-headless>=4.9"]' in pyproject
+    assert "PyYAML>=6.0" in evaluation
+    assert "opencv-python-headless>=4.9" in evaluation
+    assert "diffusers>=0.35" not in evaluation
+    assert "-r requirements.txt" in generation
+    assert "diffusers>=0.35" in generation
 
 
 def test_readme_visuals_use_semantic_labels_and_existing_assets() -> None:
@@ -53,9 +64,12 @@ def test_readme_visuals_use_semantic_labels_and_existing_assets() -> None:
     local_images = re.findall(r"!\[[^\]]+\]\((assets/[^)]+)\)", readme)
     assert local_images
     assert all((root / source).is_file() for source in local_images)
+    assert "assets/paper/figure-1.png" in local_images
+    assert "assets/paper/table-1.png" in local_images
+    assert "assets/paweval-overview.png" in local_images
 
 
-def test_paweval_is_a_visible_implementation_package_with_versioned_rubrics() -> None:
+def test_paweval_is_a_visible_implementation_with_versioned_rubrics() -> None:
     root = Path(__file__).resolve().parents[1]
     import pawbench.paweval as paweval
 

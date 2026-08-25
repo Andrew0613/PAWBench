@@ -1,4 +1,4 @@
-"""The complete public PAWBench evaluation journey."""
+"""PAWBench evaluation implementation used by the repository script."""
 
 from __future__ import annotations
 

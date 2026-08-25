@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from pawbench import compute_metrics
+from pawbench.metrics import compute_metrics
 
 
 def policy(*, calibration_groups: list[str] | None = None) -> dict:

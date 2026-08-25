@@ -1,6 +1,6 @@
 """Generate PAWBench rollouts with a Diffusers image-to-video model.
 
-The output layout is consumed directly by ``examples/quickstart.py``::
+The output layout is consumed directly by ``evaluate.py``::
 
     <output>/<scene_id>/r000.mp4 ... r049.mp4
 
@@ -187,7 +187,8 @@ def _diffusers_runtime(
         from diffusers.utils import export_to_video, load_image
     except ModuleNotFoundError as exc:
         raise SystemExit(
-            'Install generation dependencies first: pip install -e ".[generate]"'
+            "Install generation dependencies first: "
+            "pip install -r requirements-generate.txt"
         ) from exc
 
     dtype = getattr(torch, dtype_name)
