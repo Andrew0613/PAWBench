@@ -28,9 +28,7 @@ valid state. PAWBench therefore asks whether a video generator reproduces a
 *distribution* of physical outcomes across repeated rollouts, not whether it
 can produce one convincing video.
 
-<p align="center">
-  <img src="assets/paweval-overview.png" alt="A coin-toss source image and action are rolled out repeatedly; PAWEval assigns Head or Tail labels and compares the observed and expected distributions." width="900">
-</p>
+![PAWBench overview: repeated physical rollouts are labeled and compared with the expected outcome distribution.](assets/paweval-overview.png)
 
 For each fixed source image and action, generate 50 videos. PAWEval reads each
 rollout with a scene-specific rubric, then the official metrics aggregate the
@@ -59,21 +57,17 @@ the resulting distribution rather than judging a single video in isolation.
 These two published HappyHorse rollouts illustrate the readout protocol; neither
 single rollout is a model-level result.
 
-### PAW-Calibration: Coin flip (`A-01`)
+### PAW-Calibration: Coin flip
 
-<p align="center">
-  <img src="assets/examples/a01-coin-flip.png" alt="A generated coin-flip rollout beginning with a coin held over a table and ending with the coin lying heads-up." width="900">
-</p>
+![A generated coin-flip rollout beginning with a coin held over a table and ending with the coin lying heads-up.](assets/examples/coin-flip-rollout.png)
 
 **Action:** flick the coin once. This rollout is read as `heads`. Across 50
 rollouts, the Head/Tail frequencies are compared with the scene's reference
 distribution using TVD.
 
-### PAW-Coverage: Ball Toss Into Cup (`BC-01`)
+### PAW-Coverage: Ball Toss Into Cup
 
-<p align="center">
-  <img src="assets/examples/bc01-ball-toss-cup.png" alt="A generated ball-toss rollout beginning with a ball held near a cup and ending with the ball inside the cup." width="900">
-</p>
+![A generated ball-toss rollout beginning with a ball held near a cup and ending with the ball inside the cup.](assets/examples/ball-toss-cup-rollout.png)
 
 **Action:** toss the ball once toward the cup. This rollout is read as
 `clean_in_cup`. Across repeated rollouts, Coverage asks how many supported
@@ -135,11 +129,9 @@ rollouts in this simple layout:
 
 ```text
 my-model-rollouts/
-├── A-01/
+├── <scene-id>/
 │   ├── r000.mp4
 │   └── ... r049.mp4
-├── A-02/
-│   └── ...
 └── ...
 ```
 

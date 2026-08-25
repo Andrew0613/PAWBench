@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
+import re
 from pathlib import Path
 
 import pytest
@@ -39,6 +40,19 @@ def test_package_has_no_download_surface_and_media_is_opt_in() -> None:
     assert 'dependencies = ["PyYAML>=6.0"]' in pyproject
     assert "huggingface-hub" not in pyproject
     assert 'eval = ["opencv-python-headless>=4.9"]' in pyproject
+
+
+def test_readme_visuals_use_semantic_labels_and_existing_assets() -> None:
+    root = Path(__file__).resolve().parents[1]
+    readme = (root / "README.md").read_text(encoding="utf-8")
+
+    for internal_id in ("A-01", "BC-01", "a01", "bc01"):
+        assert internal_id not in readme
+
+    assert '<img src="assets/' not in readme
+    local_images = re.findall(r"!\[[^\]]+\]\((assets/[^)]+)\)", readme)
+    assert local_images
+    assert all((root / source).is_file() for source in local_images)
 
 
 def test_paweval_is_a_visible_implementation_package_with_versioned_rubrics() -> None:
