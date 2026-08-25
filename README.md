@@ -67,7 +67,8 @@ python evaluate.py \
 
 The command writes resumable judgments and final metrics under `--output`.
 See [Detailed setup](#detailed-setup) for the rollout layout and an optional
-Diffusers generation example.
+Diffusers generation example, or follow the complete
+[Diffusers generation-to-evaluation workflow](examples/README.md#generate-and-evaluate-with-diffusers).
 
 ## Visual examples
 

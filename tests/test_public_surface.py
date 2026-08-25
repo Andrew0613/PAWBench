@@ -57,6 +57,16 @@ def test_requirements_keep_evaluation_and_generation_dependencies_separate() -> 
     assert "diffusers>=0.35" in generation
 
 
+def test_diffusers_example_documents_one_continuous_generation_to_evaluation_path() -> None:
+    root = Path(__file__).resolve().parents[1]
+    examples = (root / "examples" / "README.md").read_text(encoding="utf-8")
+
+    assert "python examples/generate_diffusers.py" in examples
+    assert '  --output "$RUN_DIR/rollouts"' in examples
+    assert "python evaluate.py" in examples
+    assert '  --videos "$RUN_DIR/rollouts"' in examples
+
+
 def test_readme_visuals_use_semantic_labels_and_existing_assets() -> None:
     root = Path(__file__).resolve().parents[1]
     readme = (root / "README.md").read_text(encoding="utf-8")
