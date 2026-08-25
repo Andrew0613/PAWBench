@@ -4,9 +4,9 @@ The output layout is consumed directly by ``examples/quickstart.py``::
 
     <output>/<scene_id>/r000.mp4 ... r049.mp4
 
-Start with one scene and one rollout, then expand to the complete 50 x 50 grid.
-The model must be a Diffusers image-to-video pipeline that accepts ``image``,
-``prompt``, and ``generator`` and returns ``.frames``.
+The official run covers the complete 50 x 50 grid. The model must be a
+Diffusers image-to-video pipeline that accepts ``image``, ``prompt``, and
+``generator`` and returns ``.frames``.
 """
 
 from __future__ import annotations
@@ -14,10 +14,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Sequence
-
+from typing import Any
 
 DEFAULT_MODEL_ID = "Wan-AI/Wan2.1-I2V-14B-480P-Diffusers"
 
@@ -191,8 +191,9 @@ def _diffusers_runtime(
         ) from exc
 
     dtype = getattr(torch, dtype_name)
+    # ``device_map`` already places the pipeline. Diffusers rejects an explicit
+    # ``pipe.to(...)`` while a device map is active.
     pipe = DiffusionPipeline.from_pretrained(model_id, dtype=dtype, device_map=device_map)
-    pipe.to(device)
     return torch, pipe, load_image, export_to_video
 
 

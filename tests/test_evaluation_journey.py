@@ -15,9 +15,11 @@ from pawbench.paweval.rubrics.loader import load_rubric
 def _scene_ids(track: str) -> list[str]:
     outcome_root = Path(evaluation.__file__).parent / "paweval" / "rubrics" / "outcome"
     all_ids = sorted(path.stem for path in outcome_root.glob("*.yaml"))
-    return [scene_id for scene_id in all_ids if scene_id.startswith("A")] if track == "calibration" else [
-        scene_id for scene_id in all_ids if not scene_id.startswith("A")
-    ]
+    return (
+        [scene_id for scene_id in all_ids if scene_id.startswith("A")]
+        if track == "calibration"
+        else [scene_id for scene_id in all_ids if not scene_id.startswith("A")]
+    )
 
 
 def write_benchmark(root: Path) -> None:
@@ -43,10 +45,14 @@ def write_benchmark(root: Path) -> None:
     assert len(scenes) == 50
     (root / "tiny.mp4").write_bytes(b"fixture")
     (root / "manifest.json").write_text(
-        json.dumps({"schema_version": "pawbench.benchmark_inputs/v1", "scene_table": "scenes.jsonl"}),
+        json.dumps(
+            {"schema_version": "pawbench.benchmark_inputs/v1", "scene_table": "scenes.jsonl"}
+        ),
         encoding="utf-8",
     )
-    (root / "scenes.jsonl").write_text("\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8")
+    (root / "scenes.jsonl").write_text(
+        "\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8"
+    )
 
 
 def videos(root: Path) -> list[dict]:
@@ -119,6 +125,7 @@ def fake_evaluator(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(metrics, "EXPECTED_ROLLOUTS", 1)
     monkeypatch.setattr(evaluation, "extract_video_frames", fake_extract)
     monkeypatch.setattr(evaluation, "OpenAICompatibleJudgeClient", lambda _: FakeJudgeClient())
+    monkeypatch.setenv("TEST_KEY", "test-key")
 
 
 def test_public_evaluation_journey_runs_paweval_and_official_metrics(tmp_path: Path) -> None:
@@ -136,7 +143,9 @@ def test_public_evaluation_journey_runs_paweval_and_official_metrics(tmp_path: P
 
 
 @pytest.mark.parametrize("mutation", ["missing", "duplicate"])
-def test_missing_or_duplicate_videos_block_without_shrinking_the_grid(tmp_path: Path, mutation: str) -> None:
+def test_missing_or_duplicate_videos_block_without_shrinking_the_grid(
+    tmp_path: Path, mutation: str
+) -> None:
     root = tmp_path / "benchmark"
     write_benchmark(root)
     rows = videos(root)
@@ -161,7 +170,9 @@ def test_invalid_benchmark_contract_fails_before_media_or_judging(
     scenes_path = root / "scenes.jsonl"
     scenes = [json.loads(line) for line in scenes_path.read_text(encoding="utf-8").splitlines()]
     scenes[0]["split"] = "coverage"
-    scenes_path.write_text("\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8")
+    scenes_path.write_text(
+        "\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8"
+    )
     monkeypatch.setattr(
         evaluation,
         "extract_video_frames",
@@ -172,13 +183,17 @@ def test_invalid_benchmark_contract_fails_before_media_or_judging(
         call(root, videos(root))
 
 
-def test_missing_rubric_fails_before_media_or_judging(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_missing_rubric_fails_before_media_or_judging(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     root = tmp_path / "benchmark"
     write_benchmark(root)
     scenes_path = root / "scenes.jsonl"
     scenes = [json.loads(line) for line in scenes_path.read_text(encoding="utf-8").splitlines()]
     scenes[0]["scene_id"] = "missing-rubric"
-    scenes_path.write_text("\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8")
+    scenes_path.write_text(
+        "\n".join(json.dumps(scene) for scene in scenes) + "\n", encoding="utf-8"
+    )
     rows = videos(root)
     rows[0] = {**rows[0], "scene_id": "missing-rubric"}
     monkeypatch.setattr(
@@ -187,5 +202,67 @@ def test_missing_rubric_fails_before_media_or_judging(monkeypatch: pytest.Monkey
         lambda **_: pytest.fail("missing rubric must fail before media extraction"),
     )
 
-    with pytest.raises(ValueError, match="benchmark scene has no valid outcome rubric: missing-rubric"):
+    with pytest.raises(
+        ValueError, match="benchmark scene has no valid outcome rubric: missing-rubric"
+    ):
         call(root, rows)
+
+
+def test_missing_credentials_fail_before_media_extraction(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    root = tmp_path / "benchmark"
+    write_benchmark(root)
+    monkeypatch.delenv("TEST_KEY")
+    monkeypatch.setattr(
+        evaluation,
+        "extract_video_frames",
+        lambda **_: pytest.fail("provider preflight must happen before media extraction"),
+    )
+
+    result = call(root, videos(root))
+
+    assert result["status"] == "blocked"
+    assert {row["failure_code"] for row in result["rows"]} == {"missing_credentials"}
+    assert "provider:missing_credentials" in result["blockers"]
+
+
+def test_output_checkpoint_resumes_completed_rows(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    root = tmp_path / "benchmark"
+    output = tmp_path / "evaluation"
+    write_benchmark(root)
+    first = evaluation.evaluate(
+        root,
+        videos(root),
+        model_or_lane="model-x",
+        vlm={"base_url": "https://judge.example/v1", "model": "judge", "api_key_env": "TEST_KEY"},
+        output_dir=output,
+    )
+    monkeypatch.setattr(
+        evaluation,
+        "extract_video_frames",
+        lambda **_: pytest.fail("completed rows must resume without media extraction"),
+    )
+    monkeypatch.setattr(
+        evaluation,
+        "OpenAICompatibleJudgeClient",
+        lambda _: pytest.fail("completed rows must resume without provider calls"),
+    )
+
+    resumed = evaluation.evaluate(
+        root,
+        videos(root),
+        model_or_lane="model-x",
+        vlm={"base_url": "https://judge.example/v1", "model": "judge", "api_key_env": "TEST_KEY"},
+        output_dir=output,
+    )
+
+    assert first["status"] == resumed["status"] == "ok"
+    assert first["rows"] == resumed["rows"]
+    assert set(resumed["artifacts"]) == {"run", "checkpoint", "rows", "metrics"}
+    assert len((output / "rows.jsonl").read_text(encoding="utf-8").splitlines()) == 50
+    run = json.loads((output / "run.json").read_text(encoding="utf-8"))
+    assert len(run["benchmark"]["digest"]) == 64
+    assert len(run["evaluator_digest"]) == 64

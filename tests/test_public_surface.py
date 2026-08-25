@@ -28,6 +28,7 @@ def test_evaluation_exposes_the_complete_public_journey() -> None:
         "videos",
         "model_or_lane",
         "vlm",
+        "output_dir",
     )
 
 
@@ -49,7 +50,10 @@ def test_paweval_is_a_visible_implementation_package_with_versioned_rubrics() ->
     assert (root / "pawbench" / "paweval" / "rubrics" / "outcome" / "A-03.yaml").is_file()
     assert (root / "pawbench" / "paweval" / "rubrics" / "trustworthiness" / "A-03.yaml").is_file()
     assert len(list((root / "pawbench" / "paweval" / "rubrics" / "outcome").glob("*.yaml"))) == 50
-    assert len(list((root / "pawbench" / "paweval" / "rubrics" / "trustworthiness").glob("*.yaml"))) == 50
+    assert (
+        len(list((root / "pawbench" / "paweval" / "rubrics" / "trustworthiness").glob("*.yaml")))
+        == 50
+    )
     assert "judge" not in paweval.__all__
     assert not callable(getattr(paweval, "judge", None))
     assert not (root / "pawbench" / "paweval" / "schemas").exists()

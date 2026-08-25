@@ -21,5 +21,10 @@ venv/
 coverage.xml
 htmlcov/
 
+# Local benchmark data and run outputs used by the README examples
+data/
+my-model-rollouts/
+pawbench-evaluations/
+
 # OS
 .DS_Store

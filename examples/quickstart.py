@@ -4,6 +4,7 @@ Set the following environment variables before running this file:
 
     PAWBENCH_DATA_DIR      local directory downloaded from Hugging Face
     PAWBENCH_RESULTS_DIR   <scene_id>/r000.mp4 ... r049.mp4 directories
+    PAWBENCH_OUTPUT_DIR    persistent judgments, metrics, and resume checkpoint
     PAWBENCH_MODEL         name recorded in the evaluation rows
     PAWBENCH_VLM_BASE_URL  OpenAI-compatible evaluator endpoint
     PAWBENCH_VLM_MODEL     VLM used by PAWEval
@@ -72,7 +73,9 @@ def collect_video_items(results_dir: Path, model_or_lane: str) -> list[dict[str,
 def main() -> None:
     benchmark_dir = required_path("PAWBENCH_DATA_DIR")
     results_dir = required_path("PAWBENCH_RESULTS_DIR")
+    output_dir = required_path("PAWBENCH_OUTPUT_DIR")
     model = required_value("PAWBENCH_MODEL")
+    required_value("PAWBENCH_VLM_API_KEY")
     if not (benchmark_dir / "manifest.json").is_file():
         raise SystemExit(f"PAWBENCH_DATA_DIR is not a benchmark package: {benchmark_dir}")
 
@@ -87,11 +90,14 @@ def main() -> None:
             "model": required_value("PAWBENCH_VLM_MODEL"),
             "api_key_env": "PAWBENCH_VLM_API_KEY",
         },
+        output_dir=output_dir,
     )
     print(f"status: {result['status']}")
     for blocker in result["blockers"]:
         print(f"blocker: {blocker}")
     print(f"metrics: {result['metrics']}")
+    for name, path in result.get("artifacts", {}).items():
+        print(f"{name}: {path}")
 
 
 if __name__ == "__main__":

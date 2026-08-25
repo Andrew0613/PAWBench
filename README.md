@@ -46,6 +46,11 @@ It ships 100 reviewable rubrics (one outcome rubric and one trustworthiness
 rubric per scene). The two metrics remain separate; PAWBench does not turn
 them into a single score.
 
+The outcome rubric determines the terminal label used by TVD and Coverage. The
+trustworthiness rubric is an auxiliary diagnostic: it records action,
+continuity, and physical-process failures but does not change the terminal
+label, metric denominator, or score.
+
 ## Visual examples
 
 Each strip below is one generated rollout. PAWBench repeats the same source
@@ -88,6 +93,10 @@ by the paper's released table.
 | MiniMax H3 | 10.8 | 82.9 |
 | Cosmos 3 Super I2V | 12.8 | 87.3 |
 | LTX-2.5 | 18.0 | 73.9 |
+
+The machine-readable aggregate snapshot, including scene pass rates, evaluator
+model, protocol, and pre-release evidence boundary, is tracked in
+[`results/pre_release_oracle_pe.json`](results/pre_release_oracle_pe.json).
 
 ## Run PAWBench
 
@@ -148,21 +157,18 @@ registry.
 ```bash
 pip install -e ".[generate]"
 
-# Validate a one-scene, one-rollout smoke plan without loading the model.
+# Generate the official 50-scene x 50-rollout grid.
 python examples/generate_diffusers.py \
   --benchmark "$PAWBENCH_DATA_DIR" \
   --output "$PWD/my-model-rollouts" \
   --model-id Wan-AI/Wan2.1-I2V-14B-480P-Diffusers \
-  --scene A-01 \
-  --num-rollouts 1 \
-  --dry-run
+  --all-scenes \
+  --num-rollouts 50
 ```
 
-Remove `--dry-run` to generate the video. Different compatible Diffusers
-image-to-video checkpoints can be selected with `--model-id`. Model downloads
-and GPU requirements depend on the selected checkpoint. A complete PAWBench
-run uses `--all-scenes --num-rollouts 50`, producing 2,500 videos; start with
-the smoke example before committing that compute.
+Different compatible Diffusers image-to-video checkpoints can be selected with
+`--model-id`. Model downloads and GPU requirements depend on the selected
+checkpoint. The command above produces the required 2,500 videos.
 
 #### Evaluate generated or existing rollouts
 
@@ -171,6 +177,7 @@ the videos were generated:
 
 ```bash
 export PAWBENCH_RESULTS_DIR="$PWD/my-model-rollouts"
+export PAWBENCH_OUTPUT_DIR="$PWD/pawbench-evaluations/my-model"
 export PAWBENCH_MODEL="my-model"
 
 # The OpenAI-compatible VLM used by PAWEval.
@@ -183,7 +190,10 @@ python examples/quickstart.py
 
 [`examples/quickstart.py`](examples/quickstart.py) discovers the rollout
 layout above and calls `evaluate()` with your paths, model name, and VLM
-configuration. [`examples/generate_diffusers.py`](examples/generate_diffusers.py)
+configuration. It writes `run.json`, `checkpoint.jsonl`, `rows.jsonl`, and
+`metrics.json` under `PAWBENCH_OUTPUT_DIR`. Re-running the same benchmark,
+model, and VLM configuration resumes completed rollout slots; changed video
+files are judged again. [`examples/generate_diffusers.py`](examples/generate_diffusers.py)
 is the matching optional generator example. Both remain editable examples
 rather than a submission system or model registry.
 
@@ -195,8 +205,9 @@ The public package exposes exactly two functions:
 from pawbench import compute_metrics, evaluate
 ```
 
-`evaluate(benchmark_path, videos, *, model_or_lane, vlm)` runs the complete
-local evaluation journey. `compute_metrics(rows, scene_policy)` calculates the
+`evaluate(benchmark_path, videos, *, model_or_lane, vlm, output_dir=None)` runs
+the complete local evaluation journey. Pass `output_dir` for durable artifacts
+and automatic resume. `compute_metrics(rows, scene_policy)` calculates the
 official metrics from existing judgment rows without decoding media or calling
 a VLM.
 
@@ -215,6 +226,7 @@ pawbench/
 └── paweval/                # rubrics, evidence preparation, VLM judgment
 examples/                   # Diffusers generation and evaluation examples
 assets/                     # README figures
+results/                    # machine-readable pre-release aggregate snapshot
 tests/                      # public-contract and evaluator checks
 ```
 

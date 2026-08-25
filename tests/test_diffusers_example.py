@@ -8,7 +8,6 @@ from types import SimpleNamespace
 
 import pytest
 
-
 SCRIPT = Path(__file__).parents[1] / "examples" / "generate_diffusers.py"
 SPEC = importlib.util.spec_from_file_location("generate_diffusers", SCRIPT)
 assert SPEC and SPEC.loader
@@ -74,7 +73,7 @@ def test_generate_uses_configured_pipeline_and_writes_video(tmp_path: Path) -> N
         def __init__(self, *, device: str) -> None:
             calls["device"] = device
 
-        def manual_seed(self, seed: int) -> "FakeGenerator":
+        def manual_seed(self, seed: int) -> FakeGenerator:
             calls["seed"] = seed
             return self
 
@@ -108,6 +107,41 @@ def test_generate_uses_configured_pipeline_and_writes_video(tmp_path: Path) -> N
     assert calls["pipeline"]["prompt"] == "Flick the coin once."
     assert calls["export"] == (["frame-0", "frame-1"], str(task.output_path), 16)
     assert task.output_path.read_bytes() == b"video"
+
+
+def test_runtime_uses_device_map_without_calling_to(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: dict[str, object] = {}
+
+    class FakePipe:
+        def to(self, _: str) -> None:
+            pytest.fail("a device-mapped Diffusers pipeline must not call .to()")
+
+    class FakeDiffusionPipeline:
+        @classmethod
+        def from_pretrained(cls, model_id: str, **kwargs: object) -> FakePipe:
+            calls["model_id"] = model_id
+            calls["kwargs"] = kwargs
+            return FakePipe()
+
+    fake_torch = SimpleNamespace(bfloat16="bf16")
+    fake_diffusers = SimpleNamespace(DiffusionPipeline=FakeDiffusionPipeline)
+    fake_utils = SimpleNamespace(
+        export_to_video=lambda *_args, **_kwargs: None,
+        load_image=lambda path: path,
+    )
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    monkeypatch.setitem(sys.modules, "diffusers", fake_diffusers)
+    monkeypatch.setitem(sys.modules, "diffusers.utils", fake_utils)
+
+    _, pipe, _, _ = generate_diffusers._diffusers_runtime(
+        "example/model", dtype_name="bfloat16", device="cuda", device_map="cuda"
+    )
+
+    assert isinstance(pipe, FakePipe)
+    assert calls == {
+        "model_id": "example/model",
+        "kwargs": {"dtype": "bf16", "device_map": "cuda"},
+    }
 
 
 def test_dry_run_never_imports_diffusers(
