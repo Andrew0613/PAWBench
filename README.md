@@ -12,9 +12,6 @@
   </a>
 </p>
 
-> [!WARNING]
-> **Pre-release repository.** The evaluator and benchmark data are available for review. Paper links, the project page, and the public leaderboard will be added with the release.
-
 ## Overview
 
 Physical processes are stochastic: the same action can end in more than one
@@ -104,7 +101,7 @@ terminal outcome, and aggregates the 50 labels into the distribution scored by
 TVD or Coverage. A separate trustworthiness rubric records action, continuity,
 and physical-process failures without changing the terminal label or score.
 
-## Initial results (pre-release)
+## Benchmark results
 
 ![Table 1: Main PAWBench results across PAW-Calibration and PAW-Coverage.](assets/paper/table-1.png)
 
