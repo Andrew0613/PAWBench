@@ -20,8 +20,12 @@ def test_repository_uses_a_direct_script_instead_of_an_installable_package() -> 
     assert (root / "evaluate.py").is_file()
     assert "pip install -r requirements.txt" in readme
     assert "python evaluate.py" in readme
+    assert "## Quick start" in readme
+    assert "## Detailed setup" in readme
     assert "pip install -e" not in readme
     assert "## Python API" not in readme
+    assert "RESULTS-pre--release" not in readme
+    assert "PROJECT-PAGE-coming_soon" not in readme
     assert "[project]" not in pyproject
     assert "[build-system]" not in pyproject
 
