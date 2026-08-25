@@ -23,7 +23,7 @@ def test_main_passes_a_persistent_output_directory(monkeypatch, tmp_path: Path) 
     scene = rollouts / "coin-flip"
     scene.mkdir()
     (scene / "r000.mp4").write_bytes(b"video")
-    monkeypatch.setenv("PAWBENCH_VLM_API_KEY", "test-key")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     captured = {}
 
     def fake_evaluate(*args, **kwargs):
@@ -61,5 +61,5 @@ def test_main_passes_a_persistent_output_directory(monkeypatch, tmp_path: Path) 
     assert captured["kwargs"]["vlm"] == {
         "base_url": "https://judge.example/v1",
         "model": "judge",
-        "api_key_env": "PAWBENCH_VLM_API_KEY",
+        "api_key_env": "OPENAI_API_KEY",
     }

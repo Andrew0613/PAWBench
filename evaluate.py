@@ -38,7 +38,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--vlm-model", required=True, help="VLM used by PAWEval")
     parser.add_argument(
         "--vlm-api-key-env",
-        default="PAWBENCH_VLM_API_KEY",
+        default="OPENAI_API_KEY",
         help="Environment variable containing the endpoint API key",
     )
     return parser.parse_args(argv)

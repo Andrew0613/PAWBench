@@ -55,7 +55,7 @@ hf download Andrew613/PAWBench \
   --local-dir "$PWD/data/PAWBench"
 
 # Put your videos under my-model-rollouts/<scene-id>/r000.mp4 ... r049.mp4.
-export PAWBENCH_VLM_API_KEY="..."
+export OPENAI_API_KEY="..."
 python evaluate.py \
   --benchmark "$PWD/data/PAWBench" \
   --videos "$PWD/my-model-rollouts" \
@@ -182,7 +182,7 @@ The evaluator only needs the completed rollout directory, regardless of how
 the videos were generated:
 
 ```bash
-export PAWBENCH_VLM_API_KEY="..."
+export OPENAI_API_KEY="..."
 
 python evaluate.py \
   --benchmark "$PWD/data/PAWBench" \
