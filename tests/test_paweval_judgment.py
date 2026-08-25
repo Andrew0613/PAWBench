@@ -10,7 +10,7 @@ from pawbench.paweval.adapter import build_request_payload
 from pawbench.paweval.evidence.frames import EvidenceFrame
 from pawbench.paweval.evidence.package import EvidencePackage
 from pawbench.paweval.evidence.source_image import SourceImageIdentity
-from pawbench.paweval.judge.client import _completion_url
+from pawbench.paweval.judge.client import StaticJudgeClient, _completion_url
 from pawbench.paweval.judge.requests import JudgeRequest, RowIdentity
 from pawbench.paweval.judge.responses import JudgeResponse, parse_judge_response
 from pawbench.paweval.judgment import JudgmentPreflightError, JudgmentSample, judge
@@ -28,9 +28,15 @@ def _package(tmp_path: Path) -> EvidencePackage:
         sample_id="s1",
         scene_id="A-03",
         frames=(
-            EvidenceFrame("s1-initial", "initial", _write_media(tmp_path, "initial.jpg", b"initial"), 0.0),
-            EvidenceFrame("s1-action", "action", _write_media(tmp_path, "action.jpg", b"action"), 0.5),
-            EvidenceFrame("s1-terminal", "terminal", _write_media(tmp_path, "terminal.jpg", b"terminal"), 1.0),
+            EvidenceFrame(
+                "s1-initial", "initial", _write_media(tmp_path, "initial.jpg", b"initial"), 0.0
+            ),
+            EvidenceFrame(
+                "s1-action", "action", _write_media(tmp_path, "action.jpg", b"action"), 0.5
+            ),
+            EvidenceFrame(
+                "s1-terminal", "terminal", _write_media(tmp_path, "terminal.jpg", b"terminal"), 1.0
+            ),
         ),
         source_image=SourceImageIdentity(attached=True, uri=source_uri),
     )
@@ -76,22 +82,29 @@ class ScriptedAdapter:
         self.calls.append(request)
         if request.row_identity.repeat_index == 2 and request.axis == "trustworthiness_audit":
             return parse_judge_response("not json", axis=request.axis, scene_id=request.scene_id)
-        raw = _trust() if request.axis == "trustworthiness_audit" else _outcome(readable=request.row_identity.repeat_index != 1)
+        raw = (
+            _trust()
+            if request.axis == "trustworthiness_audit"
+            else _outcome(readable=request.row_identity.repeat_index != 1)
+        )
         return parse_judge_response(raw, axis=request.axis, scene_id=request.scene_id)
 
 
-def _sample(tmp_path: Path, repeat_index: int) -> JudgmentSample:
+def _sample(package: EvidencePackage, repeat_index: int) -> JudgmentSample:
     return JudgmentSample(
-        package=_package(tmp_path),
+        package=package,
         track="calibration",
         row_identity=RowIdentity("s1", "A-03", "model-x", repeat_index),
     )
 
 
-def test_judge_keeps_each_repeat_and_classifies_outcome_null_and_infrastructure(tmp_path: Path) -> None:
+def test_judge_keeps_each_repeat_and_classifies_outcome_null_and_infrastructure(
+    tmp_path: Path,
+) -> None:
     adapter = ScriptedAdapter()
+    package = _package(tmp_path)
     batch = judge(
-        samples=[_sample(tmp_path, 0), _sample(tmp_path, 1), _sample(tmp_path, 2)],
+        samples=[_sample(package, repeat) for repeat in range(3)],
         adapter=adapter,
     )
 
@@ -110,17 +123,19 @@ def test_judge_keeps_each_repeat_and_classifies_outcome_null_and_infrastructure(
 
 
 def test_judge_rejects_invalid_track_before_calling_adapter(tmp_path: Path) -> None:
-    adapter = ScriptedAdapter()
-    invalid = replace(_sample(tmp_path, 0), track="not-a-track")
+    calls = []
+    adapter = StaticJudgeClient({}, calls=calls)
+    invalid = replace(_sample(_package(tmp_path), 0), track="not-a-track")
 
     with pytest.raises(JudgmentPreflightError, match="invalid_track"):
         judge(samples=[invalid], adapter=adapter)
 
-    assert adapter.calls == []
+    assert calls == []
 
 
 def test_judge_keeps_unavailable_evidence_as_one_infrastructure_row(tmp_path: Path) -> None:
-    adapter = ScriptedAdapter()
+    calls = []
+    adapter = StaticJudgeClient({}, calls=calls)
     invalid = replace(_package(tmp_path), frames=())
     batch = judge(
         samples=[JudgmentSample(invalid, "calibration", RowIdentity("s1", "A-03", "model-x", 0))],
@@ -130,7 +145,7 @@ def test_judge_keeps_unavailable_evidence_as_one_infrastructure_row(tmp_path: Pa
     assert [(item.status, item.failure_code) for item in batch.judgments] == [
         ("infrastructure_failure", "evidence_unavailable")
     ]
-    assert adapter.calls == []
+    assert calls == []
 
 
 def test_adapter_builds_multimodal_messages_from_local_media(tmp_path: Path) -> None:
@@ -141,12 +156,20 @@ def test_adapter_builds_multimodal_messages_from_local_media(tmp_path: Path) -> 
     content = messages[1]["content"]
     assert content[0] == {"type": "text", "text": "judge this"}
     assert [part["type"] for part in content].count("image_url") == 4
-    assert all(part["image_url"]["url"].startswith("data:image/") for part in content if part["type"] == "image_url")
+    assert all(
+        part["image_url"]["url"].startswith("data:image/")
+        for part in content
+        if part["type"] == "image_url"
+    )
 
 
 def test_judge_keeps_media_transport_failure_as_one_infrastructure_row(tmp_path: Path) -> None:
-    package = replace(_package(tmp_path), source_image=SourceImageIdentity(attached=True, uri=(tmp_path / "missing.png").as_uri()))
-    adapter = ScriptedAdapter()
+    package = replace(
+        _package(tmp_path),
+        source_image=SourceImageIdentity(attached=True, uri=(tmp_path / "missing.png").as_uri()),
+    )
+    calls = []
+    adapter = StaticJudgeClient({}, calls=calls)
 
     batch = judge(
         samples=[JudgmentSample(package, "calibration", RowIdentity("s1", "A-03", "model-x", 0))],
@@ -156,8 +179,10 @@ def test_judge_keeps_media_transport_failure_as_one_infrastructure_row(tmp_path:
     assert [(item.status, item.failure_code) for item in batch.judgments] == [
         ("infrastructure_failure", "media_transport_failed")
     ]
-    assert adapter.calls == []
+    assert calls == []
 
 
 def test_openai_compatible_adapter_accepts_a_normal_local_endpoint() -> None:
-    assert _completion_url("http://localhost:8000/v1") == "http://localhost:8000/v1/chat/completions"
+    assert (
+        _completion_url("http://localhost:8000/v1") == "http://localhost:8000/v1/chat/completions"
+    )

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 import json
 
 import pytest
@@ -70,10 +69,12 @@ def scene(result: dict, track: str, scene_id: str) -> dict:
     )
 
 
-def replace_scene(rows: list[dict], track: str, scene_id: str, labels: list[str | None]) -> list[dict]:
-    return [row for row in rows if not (row["track"] == track and row["scene_id"] == scene_id)] + rows_for(
-        scene_id, track, labels
-    )
+def replace_scene(
+    rows: list[dict], track: str, scene_id: str, labels: list[str | None]
+) -> list[dict]:
+    return [
+        row for row in rows if not (row["track"] == track and row["scene_id"] == scene_id)
+    ] + rows_for(scene_id, track, labels)
 
 
 def test_calibration_uses_valid_only_tvd_and_the_30_null_boundary() -> None:
@@ -86,7 +87,9 @@ def test_calibration_uses_valid_only_tvd_and_the_30_null_boundary() -> None:
     assert target["metric"] == {"name": "calibration_tvd_percent", "value": 50.0}
 
     rows = replace_scene(rows, "calibration", "scene-00", ["a"] * 20 + ["b"] * 20 + [None] * 10)
-    assert scene(compute_metrics(rows, policy()), "calibration", "scene-00")["metric"]["value"] == 0.0
+    assert (
+        scene(compute_metrics(rows, policy()), "calibration", "scene-00")["metric"]["value"] == 0.0
+    )
 
     rows = replace_scene(rows, "calibration", "scene-00", ["a"] * 19 + [None] * 31)
     assert scene(compute_metrics(rows, policy()), "calibration", "scene-00")["metric"] is None
@@ -146,12 +149,12 @@ def test_rows_and_result_are_json_compatible_and_invalid_inputs_fail_closed() ->
     result = compute_metrics(rows, policy())
     assert json.loads(json.dumps(result)) == result
 
-    duplicate = deepcopy(rows)
-    duplicate.append(deepcopy(rows[0]))
+    duplicate = list(rows)
+    duplicate.append(dict(rows[0]))
     with pytest.raises(ValueError, match="duplicate slot"):
         compute_metrics(duplicate, policy())
 
-    invalid_label = deepcopy(rows)
-    invalid_label[0]["outcome_label"] = "not-in-ontology"
+    invalid_label = list(rows)
+    invalid_label[0] = {**rows[0], "outcome_label": "not-in-ontology"}
     with pytest.raises(ValueError, match="outside scene ontology"):
         compute_metrics(invalid_label, policy())

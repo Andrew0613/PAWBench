@@ -171,11 +171,8 @@ def test_dry_run_never_imports_diffusers(
 
 
 def test_scene_selection_must_be_explicit(tmp_path: Path) -> None:
-    benchmark = tmp_path / "benchmark"
-    write_benchmark(benchmark)
-
     with pytest.raises(SystemExit) as exc_info:
         generate_diffusers.parse_args(
-            ["--benchmark", str(benchmark), "--output", str(tmp_path / "rollouts")]
+            ["--benchmark", str(tmp_path / "benchmark"), "--output", str(tmp_path / "rollouts")]
         )
     assert exc_info.value.code == 2
