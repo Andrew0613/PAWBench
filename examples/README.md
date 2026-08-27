@@ -27,7 +27,7 @@ Install the optional generation dependencies and select a compatible
 image-to-video checkpoint:
 
 ```bash
-pip install -r requirements-generate.txt
+pip install -r requirements.txt
 
 BENCHMARK_DIR="$PWD/data/PAWBench"
 RUN_DIR="$PWD/runs/wan21"

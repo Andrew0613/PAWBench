@@ -188,7 +188,7 @@ def _diffusers_runtime(
     except ModuleNotFoundError as exc:
         raise SystemExit(
             "Install generation dependencies first: "
-            "pip install -r requirements-generate.txt"
+            "pip install -r requirements.txt"
         ) from exc
 
     dtype = getattr(torch, dtype_name)
