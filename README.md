@@ -7,6 +7,9 @@
   <a href="#citation">
     <img src="https://img.shields.io/badge/arXiv-coming_soon-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white" alt="arXiv: coming soon">
   </a>
+  <a href="https://pawbench.github.io">
+    <img src="https://img.shields.io/badge/WEBPAGE-PAWBench-2F80ED?style=for-the-badge&logo=githubpages&logoColor=white" alt="PAWBench webpage">
+  </a>
   <a href="https://huggingface.co/datasets/Andrew613/PAWBench">
     <img src="https://img.shields.io/badge/%F0%9F%A4%97_Dataset-PAWBench-FFD21E?style=for-the-badge" alt="Hugging Face dataset">
   </a>
@@ -34,10 +37,21 @@ It ships 100 reviewable rubrics (one outcome rubric and one trustworthiness
 rubric per scene). The two metrics remain separate; PAWBench does not turn
 them into a single score.
 
-## Quick start
+## Evaluate a new video model
 
-Install the dependencies, download the benchmark, and point the evaluator at
-your generated rollouts:
+PAWBench has one model-to-result workflow. First, use the benchmark inputs to
+generate a complete rollout directory. Then pass that directory to PAWEval,
+which reads the videos with the official Gemini 3.5 Flash judge and computes
+the two benchmark metrics.
+
+```text
+benchmark package -> video generator -> rollout directory -> PAWEval -> metrics.json
+```
+
+The generator and the judge are different models. `evaluate.py` never loads or
+runs the video generator; it evaluates videos that already exist on disk.
+
+### 1. Install and download the benchmark
 
 ```bash
 git clone https://github.com/Andrew0613/PAWBench.git
@@ -46,34 +60,108 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
+export PAWBENCH_DATA_DIR="$PWD/data/PAWBench"
 pip install -U "huggingface_hub[cli]"
 hf download Andrew613/PAWBench \
   --repo-type dataset \
-  --local-dir "$PWD/data/PAWBench"
-
-# Put your videos under my-model-rollouts/<scene-id>/r000.mp4 ... r049.mp4.
-export OPENAI_API_KEY="..."
-python evaluate.py \
-  --benchmark "$PWD/data/PAWBench" \
-  --videos "$PWD/my-model-rollouts" \
-  --output "$PWD/pawbench-evaluations/my-model" \
-  --model my-model \
-  --vlm-base-url "https://your-vlm-provider.example/v1" \
-  --vlm-model "your-vlm-model"
+  --local-dir "$PAWBENCH_DATA_DIR"
 ```
 
-The command writes resumable judgments and final metrics under `--output`.
-See [Detailed setup](#detailed-setup) for the rollout layout and an optional
-Diffusers generation example, or follow the complete
-[Diffusers generation-to-evaluation workflow](examples/README.md#generate-and-evaluate-with-diffusers).
+The downloaded directory contains the scene table, source images, generation
+prompts, and scoring policy used by the evaluator.
+
+### 2. Generate or provide the rollouts
+
+For every released scene, generate 50 independent videos from the scene's
+source image and generation prompt. Any video generator is supported as long
+as it writes the complete 50-scene x 50-rollout grid in this layout:
+
+```text
+my-model-rollouts/
+├── <scene-id>/
+│   ├── r000.mp4
+│   ├── ...
+│   └── r049.mp4
+└── ...
+```
+
+You can produce this directory with your own generation system or use one of
+the editable examples:
+
+- [Diffusers generation](examples/README.md#generate-and-evaluate-with-diffusers)
+  for compatible local or Hugging Face checkpoints.
+- [OpenRouter generation](examples/README.md#generate-with-openrouter) for
+  hosted image-to-video models.
+
+Both examples write the same rollout contract consumed by `evaluate.py`; they
+are optional implementations, not separate benchmark protocols.
+
+### 3. Configure the official PAWEval judge
+
+The official PAWBench results use **Gemini 3.5 Flash** through OpenRouter's
+OpenAI-compatible endpoint. This credential belongs to the PAWEval judge, not
+to the video generator:
+
+```bash
+export OPENROUTER_API_KEY="..."
+```
+
+`OPENAI_API_KEY` is not required for the official workflow; the evaluation
+command below explicitly tells PAWEval to read `OPENROUTER_API_KEY`.
+A local generator such as Diffusers does not need this key during generation.
+The optional OpenRouter generator also uses `OPENROUTER_API_KEY`, but generation
+and PAWEval judging remain separate API stages.
+
+### 4. Run PAWEval
+
+```bash
+export MODEL_NAME="my-model"
+export RUN_DIR="$PWD/runs/$MODEL_NAME"
+
+python evaluate.py \
+  --benchmark "$PAWBENCH_DATA_DIR" \
+  --videos "$PWD/my-model-rollouts" \
+  --output "$RUN_DIR/evaluation" \
+  --model "$MODEL_NAME" \
+  --vlm-base-url "https://openrouter.ai/api/v1" \
+  --vlm-model "google/gemini-3.5-flash" \
+  --vlm-api-key-env OPENROUTER_API_KEY
+```
+
+`--model` is the name recorded in the result files; it does not load the video
+generator. Re-running the same benchmark, model name, videos, and judge
+configuration resumes completed rollout judgments.
+
+Other OpenAI-compatible multimodal judges can be selected with
+`--vlm-base-url`, `--vlm-model`, and `--vlm-api-key-env`. Those runs are useful
+for analysis, but they are not directly comparable with the official Gemini
+3.5 Flash results.
+
+### 5. Read the result
+
+PAWEval writes `run.json`, `checkpoint.jsonl`, `rows.jsonl`, and `metrics.json`
+under `--output`. A complete evaluation has `status: "ok"` and no blockers.
+The two track averages remain separate. Inspect the result with the Python
+standard library:
+
+```bash
+python -m json.tool "$RUN_DIR/evaluation/metrics.json"
+```
+
+Calibration reports TVD percentage, where lower is better. Coverage reports
+support coverage percentage, where higher is better. Their values are stored
+under `tracks.calibration.models.<model>.track_average` and
+`tracks.coverage.models.<model>.track_average`. If `status` is `"blocked"`,
+resolve the listed missing-video, judge, or infrastructure failures before
+reporting the result.
 
 ## Visual examples
 
 Each strip below is one generated rollout. PAWBench repeats the same source
 image and action 50 times, reads one outcome from every rollout, and evaluates
 the resulting distribution rather than judging a single video in isolation.
-These two published HappyHorse rollouts illustrate the readout protocol; neither
-single rollout is a model-level result.
+This published rollout illustrates the readout protocol; a single rollout is
+not a model-level result.
 
 ### PAW-Calibration: Coin flip
 
@@ -83,14 +171,7 @@ single rollout is a model-level result.
 rollouts, the Head/Tail frequencies are compared with the scene's reference
 distribution using TVD.
 
-### PAW-Coverage: Ball Toss Into Cup
-
-![A generated ball-toss rollout beginning with a ball held near a cup and ending with the ball inside the cup.](assets/examples/ball-toss-cup-rollout.png)
-
-**Action:** toss the ball once toward the cup. This rollout is read as
-`clean_in_cup`. Across repeated rollouts, Coverage asks how many supported
-outcomes the model recovers, including in-cup, contact-then-out, near-miss, and
-clear-miss outcomes.
+More qualitative examples will be released with the paper.
 
 ## How PAWEval works
 
@@ -100,109 +181,23 @@ PAWEval reads every generated video with the scene's outcome rubric, assigns a
 terminal outcome, and aggregates the 50 labels into the distribution scored by
 TVD or Coverage. A separate trustworthiness rubric records action, continuity,
 and physical-process failures without changing the terminal label or score.
+All official results use Gemini 3.5 Flash as the PAWEval judge.
 
 ## Benchmark results
 
 ![Table 1: Main PAWBench results across PAW-Calibration and PAW-Coverage.](assets/paper/table-1.png)
 
-## Detailed setup
-
-The shortest workflow is: install the dependencies, download the data once,
-generate your videos, then run one evaluation script. PAWBench does not need to
-be installed as a Python package.
-
-### 1. Install
-
-```bash
-git clone https://github.com/Andrew0613/PAWBench.git
-cd PAWBench
-
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 2. Download the benchmark data
-
-Choose where to keep the dataset, then download it there.
-
-```bash
-export PAWBENCH_DATA_DIR="$PWD/data/PAWBench"
-pip install -U "huggingface_hub[cli]"
-hf download Andrew613/PAWBench --repo-type dataset --local-dir "$PAWBENCH_DATA_DIR"
-```
-
-Afterward, the directory should contain `manifest.json`, `scenes.jsonl`,
-`source_images/`, and `prompts/`. Keep this path for the commands below.
-
-### 3. Evaluate your videos
-
-Use your own video generator on every source image/action pair and place its
-rollouts in this simple layout:
-
-```text
-my-model-rollouts/
-├── <scene-id>/
-│   ├── r000.mp4
-│   └── ... r049.mp4
-└── ...
-```
-
-The evaluation script reads videos that are already present on disk. You can
-generate them with your own system or use the optional Diffusers example below.
-
-#### Optional: generate rollouts with Diffusers
-
-If your image-to-video model is available through Diffusers, the included
-generation example can create the required directory layout directly. The
-model ID is explicit and replaceable; the example does not maintain a model
-registry.
-
-```bash
-pip install -r requirements-generate.txt
-
-# Generate the official 50-scene x 50-rollout grid.
-python examples/generate_diffusers.py \
-  --benchmark "$PAWBENCH_DATA_DIR" \
-  --output "$PWD/my-model-rollouts" \
-  --model-id Wan-AI/Wan2.1-I2V-14B-480P-Diffusers \
-  --all-scenes \
-  --num-rollouts 50
-```
-
-Different compatible Diffusers image-to-video checkpoints can be selected with
-`--model-id`. Model downloads and GPU requirements depend on the selected
-checkpoint. The command above produces the required 2,500 videos.
-
-#### Evaluate generated or existing rollouts
-
-The evaluator only needs the completed rollout directory, regardless of how
-the videos were generated:
-
-```bash
-export OPENAI_API_KEY="..."
-
-python evaluate.py \
-  --benchmark "$PWD/data/PAWBench" \
-  --videos "$PWD/my-model-rollouts" \
-  --output "$PWD/pawbench-evaluations/my-model" \
-  --model my-model \
-  --vlm-base-url "https://your-vlm-provider.example/v1" \
-  --vlm-model "your-vlm-model"
-```
-
-The script discovers the rollout layout above and writes `run.json`,
-`checkpoint.jsonl`, `rows.jsonl`, and `metrics.json` under `--output`.
-Re-running the same benchmark, model, and VLM configuration resumes completed
-rollout slots; changed video files are judged again.
+The table reports the official Gemini 3.5 Flash PAWEval configuration. Results
+produced with a different judge should identify that judge and should not be
+treated as directly comparable with Table 1.
 
 ## Repository layout
 
 ```text
-evaluate.py                 # run PAWBench on an existing rollout directory
+evaluate.py                 # evaluate one model's completed rollout directory
 pawbench/                   # evaluator implementation and official metrics
 └── paweval/                # rubrics, evidence preparation, VLM judgment
-examples/                   # optional Diffusers generation example
+examples/                   # optional local and hosted generation examples
 assets/                     # README and paper figures
 requirements*.txt           # evaluation, generation, and development dependencies
 tests/                      # evaluator and script checks
