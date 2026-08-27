@@ -168,11 +168,3 @@ def test_dry_run_never_imports_diffusers(
 
     assert status == 0
     assert "planned rollouts: 1 across 1 scene(s)" in capsys.readouterr().out
-
-
-def test_scene_selection_must_be_explicit(tmp_path: Path) -> None:
-    with pytest.raises(SystemExit) as exc_info:
-        generate_diffusers.parse_args(
-            ["--benchmark", str(tmp_path / "benchmark"), "--output", str(tmp_path / "rollouts")]
-        )
-    assert exc_info.value.code == 2

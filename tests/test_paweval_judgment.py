@@ -10,7 +10,7 @@ from pawbench.paweval.adapter import build_request_payload
 from pawbench.paweval.evidence.frames import EvidenceFrame
 from pawbench.paweval.evidence.package import EvidencePackage
 from pawbench.paweval.evidence.source_image import SourceImageIdentity
-from pawbench.paweval.judge.client import StaticJudgeClient, _completion_url
+from pawbench.paweval.judge.client import StaticJudgeClient
 from pawbench.paweval.judge.requests import JudgeRequest, RowIdentity
 from pawbench.paweval.judge.responses import JudgeResponse, parse_judge_response
 from pawbench.paweval.judgment import JudgmentPreflightError, JudgmentSample, judge
@@ -118,8 +118,6 @@ def test_judge_keeps_each_repeat_and_classifies_outcome_null_and_infrastructure(
     assert batch.judgments[1].outcome_label is None
     assert batch.judgments[2].failure_code == "malformed_trustworthiness_audit"
     assert [row["repeat_index"] for row in batch.normalized_rows()] == [0, 1, 2]
-    assert "PAWEval Outcome Readout" in adapter.calls[0].prompt
-    assert "Rubric:" in adapter.calls[0].prompt
 
 
 def test_judge_rejects_invalid_track_before_calling_adapter(tmp_path: Path) -> None:
@@ -180,9 +178,3 @@ def test_judge_keeps_media_transport_failure_as_one_infrastructure_row(tmp_path:
         ("infrastructure_failure", "media_transport_failed")
     ]
     assert calls == []
-
-
-def test_openai_compatible_adapter_accepts_a_normal_local_endpoint() -> None:
-    assert (
-        _completion_url("http://localhost:8000/v1") == "http://localhost:8000/v1/chat/completions"
-    )

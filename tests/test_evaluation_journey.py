@@ -111,12 +111,13 @@ class FakeJudgeClient:
         return parse_judge_response(json.dumps(payload), axis=axis, scene_id=scene_id)
 
 
-def call(root: Path, rows: list[dict]) -> dict:
+def call(root: Path, rows: list[dict], *, output_dir: Path | None = None) -> dict:
     return evaluation.evaluate(
         root,
         rows,
         model_or_lane="model-x",
         vlm={"base_url": "https://judge.example/v1", "model": "judge", "api_key_env": "TEST_KEY"},
+        output_dir=output_dir,
     )
 
 
@@ -129,11 +130,14 @@ def fake_evaluator(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TEST_KEY", "test-key")
 
 
-def test_public_evaluation_journey_runs_paweval_and_official_metrics(tmp_path: Path) -> None:
+def test_public_evaluation_journey_runs_and_resumes(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     root = tmp_path / "benchmark"
+    output = tmp_path / "evaluation"
     write_benchmark(root)
 
-    result = call(root, videos(root))
+    result = call(root, videos(root), output_dir=output)
 
     assert result["status"] == "ok"
     assert len(result["rows"]) == 50
@@ -141,6 +145,26 @@ def test_public_evaluation_journey_runs_paweval_and_official_metrics(tmp_path: P
     tracks = result["metrics"]["tracks"]
     assert tracks["calibration"]["models"]["model-x"]["track_average"]["value"] == 0.0
     assert tracks["coverage"]["models"]["model-x"]["track_average"]["value"] == 100.0
+
+    monkeypatch.setattr(
+        evaluation,
+        "extract_video_frames",
+        lambda **_: pytest.fail("completed rows must resume without media extraction"),
+    )
+    monkeypatch.setattr(
+        evaluation,
+        "OpenAICompatibleJudgeClient",
+        lambda _: pytest.fail("completed rows must resume without provider calls"),
+    )
+    resumed = call(root, videos(root), output_dir=output)
+
+    assert resumed["status"] == "ok"
+    assert resumed["rows"] == result["rows"]
+    assert set(resumed["artifacts"]) == {"run", "checkpoint", "rows", "metrics"}
+    assert len((output / "rows.jsonl").read_text(encoding="utf-8").splitlines()) == 50
+    run = json.loads((output / "run.json").read_text(encoding="utf-8"))
+    assert len(run["benchmark"]["digest"]) == 64
+    assert len(run["evaluator_digest"]) == 64
 
 
 @pytest.mark.parametrize("mutation", ["missing", "duplicate"])
@@ -226,44 +250,3 @@ def test_missing_credentials_fail_before_media_extraction(
     assert result["status"] == "blocked"
     assert {row["failure_code"] for row in result["rows"]} == {"missing_credentials"}
     assert "provider:missing_credentials" in result["blockers"]
-
-
-def test_output_checkpoint_resumes_completed_rows(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    root = tmp_path / "benchmark"
-    output = tmp_path / "evaluation"
-    write_benchmark(root)
-    first = evaluation.evaluate(
-        root,
-        videos(root),
-        model_or_lane="model-x",
-        vlm={"base_url": "https://judge.example/v1", "model": "judge", "api_key_env": "TEST_KEY"},
-        output_dir=output,
-    )
-    monkeypatch.setattr(
-        evaluation,
-        "extract_video_frames",
-        lambda **_: pytest.fail("completed rows must resume without media extraction"),
-    )
-    monkeypatch.setattr(
-        evaluation,
-        "OpenAICompatibleJudgeClient",
-        lambda _: pytest.fail("completed rows must resume without provider calls"),
-    )
-
-    resumed = evaluation.evaluate(
-        root,
-        videos(root),
-        model_or_lane="model-x",
-        vlm={"base_url": "https://judge.example/v1", "model": "judge", "api_key_env": "TEST_KEY"},
-        output_dir=output,
-    )
-
-    assert first["status"] == resumed["status"] == "ok"
-    assert first["rows"] == resumed["rows"]
-    assert set(resumed["artifacts"]) == {"run", "checkpoint", "rows", "metrics"}
-    assert len((output / "rows.jsonl").read_text(encoding="utf-8").splitlines()) == 50
-    run = json.loads((output / "run.json").read_text(encoding="utf-8"))
-    assert len(run["benchmark"]["digest"]) == 64
-    assert len(run["evaluator_digest"]) == 64

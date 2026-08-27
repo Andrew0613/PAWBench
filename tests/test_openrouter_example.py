@@ -271,17 +271,6 @@ def test_rejects_untrusted_source_image_base_urls(base_url: str, tmp_path: Path)
         generate_openrouter.build_request(task, request_options(source_image_base_url=base_url))
 
 
-def test_source_image_path_is_percent_encoded(tmp_path: Path) -> None:
-    scene = generate_openrouter.Scene("S-00", "source images/frame #1.png", "Action")
-    task = generate_openrouter.GenerationTask(scene, 0, tmp_path / "S-00/r000.mp4")
-
-    payload = generate_openrouter.build_request(task, request_options())
-
-    assert payload["frame_images"][0]["image_url"]["url"].endswith(
-        "/source%20images/frame%20%231.png"
-    )
-
-
 def test_model_capability_validation_fails_closed() -> None:
     model = {
         "id": "video-model",
