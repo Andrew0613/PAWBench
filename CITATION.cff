@@ -1,9 +1,73 @@
 cff-version: 1.2.0
 message: "If you use PAWBench in your research, please cite it as below."
-title: PAWBench
+title: "PAWBench: How Far Are We from Probabilistically Aligned World Modeling?"
 version: 0.1.0
 type: software
 authors:
-  - alias: PAWBench contributors
+  - given-names: Yuandong
+    family-names: Pu
+  - given-names: Le
+    family-names: Zhuo
+  - given-names: Sayak
+    family-names: Paul
+  - given-names: Gabriel Jorge
+    family-names: Menezes
+  - given-names: Avram
+    family-names: Đorđević
+  - given-names: Shiyang
+    family-names: Li
+  - given-names: Yifan
+    family-names: Zhou
+  - given-names: Bin
+    family-names: Fu
+  - given-names: Wenlong
+    family-names: Zhang
+  - given-names: Junjun
+    family-names: He
+  - given-names: Yu
+    family-names: Qiao
+  - given-names: Yihao
+    family-names: Liu
+  - given-names: Jinbo
+    family-names: Xing
+  - given-names: Xi
+    family-names: Chen
 repository-code: "https://github.com/Andrew0613/PAWBench"
+repository-artifact: "https://huggingface.co/datasets/Andrew613/PAWBench"
+url: "https://pawbench.github.io/"
 license: Apache-2.0
+preferred-citation:
+  type: article
+  title: "PAWBench: How Far Are We from Probabilistically Aligned World Modeling?"
+  authors:
+    - given-names: Yuandong
+      family-names: Pu
+    - given-names: Le
+      family-names: Zhuo
+    - given-names: Sayak
+      family-names: Paul
+    - given-names: Gabriel Jorge
+      family-names: Menezes
+    - given-names: Avram
+      family-names: Đorđević
+    - given-names: Shiyang
+      family-names: Li
+    - given-names: Yifan
+      family-names: Zhou
+    - given-names: Bin
+      family-names: Fu
+    - given-names: Wenlong
+      family-names: Zhang
+    - given-names: Junjun
+      family-names: He
+    - given-names: Yu
+      family-names: Qiao
+    - given-names: Yihao
+      family-names: Liu
+    - given-names: Jinbo
+      family-names: Xing
+    - given-names: Xi
+      family-names: Chen
+  journal: "arXiv preprint arXiv:2608.27345"
+  year: 2026
+  url: "https://arxiv.org/abs/2608.27345"
