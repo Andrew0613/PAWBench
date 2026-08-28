@@ -1,11 +1,11 @@
 # PAWBench: How Far Are We from Probabilistically Aligned World Modeling?
 
 <p align="center">
-  <a href="#citation">
-    <img src="https://img.shields.io/badge/PAPER-coming_soon-555555?style=for-the-badge&logo=readthedocs&logoColor=white" alt="Paper: coming soon">
+  <a href="https://arxiv.org/pdf/2608.27345">
+    <img src="https://img.shields.io/badge/PAPER-PDF-555555?style=for-the-badge&logo=readthedocs&logoColor=white" alt="PAWBench paper PDF">
   </a>
-  <a href="#citation">
-    <img src="https://img.shields.io/badge/arXiv-coming_soon-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white" alt="arXiv: coming soon">
+  <a href="https://arxiv.org/abs/2608.27345">
+    <img src="https://img.shields.io/badge/arXiv-2608.27345-B31B1B?style=for-the-badge&logo=arxiv&logoColor=white" alt="arXiv: 2608.27345">
   </a>
   <a href="https://pawbench.github.io">
     <img src="https://img.shields.io/badge/WEBPAGE-PAWBench-2F80ED?style=for-the-badge&logo=githubpages&logoColor=white" alt="PAWBench webpage">
@@ -171,7 +171,8 @@ not a model-level result.
 rollouts, the Head/Tail frequencies are compared with the scene's reference
 distribution using TVD.
 
-More qualitative examples will be released with the paper.
+More qualitative examples are available on the
+[project website](https://pawbench.github.io/#visual-evidence).
 
 ## How PAWEval works
 
@@ -205,9 +206,28 @@ tests/                      # evaluator and script checks
 
 ## Citation
 
-The paper and canonical citation will be added with the public release. Until
-then, cite the exact repository commit used for an evaluation.
+If you use PAWBench, please cite the paper and record the exact GitHub commit
+and Hugging Face dataset revision used for your evaluation:
+
+```bibtex
+@article{pu2026pawbench,
+  title={PAWBench: How Far Are We from Probabilistically Aligned World Modeling?},
+  author={Yuandong Pu and Le Zhuo and Sayak Paul and Gabriel Jorge Menezes and Avram Đorđević and Shiyang Li and Yifan Zhou and Bin Fu and Wenlong Zhang and Junjun He and Yu Qiao and Yihao Liu and Jinbo Xing and Xi Chen},
+  journal={arXiv preprint arXiv:2608.27345},
+  year={2026},
+  eprint={2608.27345},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV},
+  url={https://arxiv.org/abs/2608.27345}
+}
+```
 
 ## License
 
-PAWBench is released under the [Apache License 2.0](LICENSE).
+The evaluator and repository source code are released under the
+[Apache License 2.0](LICENSE). Benchmark inputs and media are distributed
+separately through the
+[Hugging Face dataset](https://huggingface.co/datasets/Andrew613/PAWBench) and
+[project website](https://pawbench.github.io/); do not infer that those assets
+are covered by this repository's code license. Consult each public surface for
+its applicable terms and provenance.
